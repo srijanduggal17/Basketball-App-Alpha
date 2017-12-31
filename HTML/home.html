@@ -1,0 +1,39 @@
+<!-- NEW -->
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Home</title>
+	<script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-messaging.js"></script>
+	<script src="../JavaScript/commonfunctions.js"></script>
+	<script src="../initializer.js"></script>
+</head>
+
+<body>
+	<div class="mdl-layout__drawer">
+		<nav class="mdl-navigation">
+			<a class="mdl-navigation__link" href="home.html">Home</a>
+			<a class="mdl-navigation__link" href="my_organizations.html">My Organization</a>
+			<a class="mdl-navigation__link" href="my_teams.html">My Teams</a>
+			<a class="mdl-navigation__link" href="schedule.html">Schedule</a>
+			<a class="mdl-navigation__link" href="data_input.html">Data Input</a>
+			<a class="mdl-navigation__link" href="individual_summaries.html">Individual Summaries</a>
+			<a class="mdl-navigation__link" href="team_summary.html">Team Summary</a>
+			<a class="mdl-navigation__link" href="team_info.html">Team Information</a>
+			<a class="mdl-navigation__link" href="account_info.html">Account Information</a>
+		</nav>
+	</div>
+	<br></br>
+	<button id="signOut" onclick="signOut()">Sign Out</button>
+	<div style = "width: 100%; overflow: hidden;">
+		<div id ="event1"; style = "width: 48%; float: left; border: solid 2px black;">
+		</div>
+		<div id ="event2"; style = "width: 48%; float: right; border: solid 2px black;">
+		</div>
+	</div>
+	<script src="../JavaScript/home.js"></script>
+</body>
+</html>

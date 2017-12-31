@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Create Team</title>	
+
+	<script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-messaging.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="../CSS/create_team.css">
+	<script src="../JavaScript/commonfunctions.js"></script>
+	<script src="../initializer.js"></script>
+	<script src="../Libraries/jquery-3.2.1.js"></script>
+</head>
+<body>
+	<!-- This block is the general team input-->
+	<h1>General Info</h1>
+	<input type="text" id="teamname" class="normalinput" placeholder="Team Name"><span id="teamnameaster" class="aster">*</span>
+	<input type="text" id="headcoach" class="normalinput" placeholder="Head Coach"><span id="headcoachaster" class="aster">*</span>
+
+	<h1>Team Members</h1>
+	
+	<!-- This section is the staff -->
+	<div id="staffdiv"> 
+		<h3>Staff</h3>
+
+		<!-- This table contains a row for each member -->
+		<table id="stafftable">
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th></th>
+				<th></th>
+			</tr>
+			<tr id="staffinputrow">
+				<td>
+					<input type="text" id="staffname" value="">
+					<span id="staffnameaster" class="aster">*</span>
+				</td>
+				<td>
+					<select id="roledropdown" class="dropdown">
+						<option value="">Select</option>
+						<option value="Assistant Coach">Assistant Coach</option>
+						<option value="Manager">Manager</option>
+						<option value="Other">Other</option>
+					</select>
+					<span id="roleaster" class="aster">*</span>
+				</td>
+				<td>
+					<button id="createstaff">+</button>
+				</td>
+			</tr>
+		</table>
+		
+		<!-- This section contains the temporary elements needed while editing a row -->
+		<select id="editroledropdown" class="dropdown">
+			<option value="">Select</option>
+			<option value="Assistant Coach">Assistant Coach</option>
+			<option value="Manager">Manager</option>
+			<option value="Other">Other</option>
+		</select>
+		<span id="editroleaster" class="aster">*</span>
+		<span id="staffeditaster" class="aster">*</span>
+
+		<div id="editstaffnamediv" class="editdivs">
+			<input type="text" id="editstaffname" value="">
+			<span id="editstaffnameaster" class="aster">*</span>
+		</div>
+		<!-- end section -->
+	</div>
+
+	<!-- This section is the players -->
+	<div id="playersdiv">
+		<h3>Players</h3>
+
+		<!-- This table contains a row for each member -->
+		<table id="playertable">
+			<tr>
+				<th>Name</th>
+				<th>Position</th>
+				<th>Height</th>
+				<th>Number</th>
+			</tr>
+			<tr id="playerinputrow">
+				<td>
+					<input type="text" id="playername" value="">
+					<span id="playernameaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="text" id="playerposition" value="">
+					<span id="playerpositionaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="number" id="playerheightfeet" value="" min="0" max="8">
+					<span>'</span>
+					<span id="playerheightfeetaster" class="aster">*</span>
+					<input type="number" id="playerheightinches" value="" min="0" max="11">
+					<span>"</span>
+					<span id="playerheightinchesaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="number" id="playernumber" value="" min="0" max="99">
+					<span id="playernumberaster" class="aster">*</span>
+				</td>
+				<td>
+					<button onclick="createPlayer()">Add</button>
+				</td>
+			</tr>
+		</table>
+
+		<!-- This section contains the temporary elements needed while editing a row -->		
+		<div id="editplayernamediv" class="editdivs">
+			<input type="text" id="editplayername" value="">
+			<span id="editplayernameaster" class="aster">*</span>
+		</div>
+		<div id="editplayerpositiondiv" class="editdivs">
+			<input type="text" id="editplayerposition" value="">
+			<span id="editplayerpositionaster" class="aster">*</span>
+		</div>
+		<div id="editplayerheightdiv" class="editdivs">
+			<input type="number" id="editplayerheightfeet" value="" min="0" max="8">
+			<span>'</span>
+			<span id="editplayerheightfeetaster" class="aster">*</span>
+			<input type="number" id="editplayerheightinches" value="" min="0" max="11">
+			<span>"</span>
+			<span id="editplayerheightinchesaster" class="aster">*</span>
+		</div>
+		<div id="editplayernumberdiv" class="editdivs">
+			<input type="number" id="editplayernumber" value="" min="0" max="99">
+			<span id="editplayernumberaster" class="aster">*</span>
+		</div>	
+		<span id="playereditaster" class="aster">*</span>
+		<!-- end section -->
+	</div>
+
+	<br>
+	<button onclick="createTeam()">Finish</button>
+	<button id="myteambutton">My Teams</button>
+	<button id="signOut" onclick="signOut()">Sign Out</button>
+
+	<script type="text/javascript" src="../JavaScript/create_team.js"></script>
+</body>
+</html>

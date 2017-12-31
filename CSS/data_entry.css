@@ -1,0 +1,138 @@
+.courtpath {
+	fill:none;
+	stroke:#000000;
+}
+
+.mdl-layout__drawer-button i {
+    color: #000;
+}
+
+.dropdown {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    overflow: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown p {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown p:hover {
+	background-color: #f1f1f1
+}
+
+#pressuretext {
+    display: inline;
+}
+
+#hoop {
+    fill: none;
+    stroke: #000;
+    z-index: 5;
+}
+
+#hoopsvg {
+    position: relative;
+    top: 9.5%;
+    left: 48%;
+    z-index: 10;
+}
+
+.circleforplayers {
+    position: absolute;
+    display: none;
+    fill: #87d7e5;
+    stroke-width: 1;
+    stroke: #000000;
+    z-index: 1;
+}
+
+#svgstuff {
+    position: relative;
+}
+
+#shots {
+    display: none;
+    stroke:rgb(255,0,0);
+    stroke-width:2;
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#court {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#actionbuttons {
+    position: absolute;
+    display: none;
+    z-index: 5;
+}
+
+#notreb {
+    display: none;
+}
+
+#oob {
+    display: none;
+}
+
+#opponent {
+    display: none;
+}
+
+#savebutton {
+    position: fixed;
+    bottom: 0px;
+}
+
+#circles {
+    display: none;
+}
+
+#passes {
+    display: none;
+    stroke: rgb(34,139,34);
+    stroke-width: 2;
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#dribbles {
+    display: none;
+    stroke: rgb(0,0,255);
+    stroke-width: 2;
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.dribbleclass {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#rebounds {
+    display: none;
+    stroke: rgb(139,0,0);
+    stroke-width: 2;
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}

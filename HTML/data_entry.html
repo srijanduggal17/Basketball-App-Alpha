@@ -1,0 +1,94 @@
+<!-- NEW -->
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Data Entry</title>
+	<script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-messaging.js"></script>
+	<link href="../CSS/data_entry.css" type="text/css" rel="stylesheet">
+	<script defer src="../JavaScript/data_entry.js"></script>
+</head>
+
+<body>
+	<div class="mdl-layout__drawer">
+		<nav class="mdl-navigation">
+			<a class="mdl-navigation__link" href="home.html">Home</a>
+			<a class="mdl-navigation__link" href="my_organizations.html">My Organization</a>
+			<a class="mdl-navigation__link" href="my_teams.html">My Teams</a>
+			<a class="mdl-navigation__link" href="schedule.html">Schedule</a>
+			<a class="mdl-navigation__link" href="data_input.html">Data Input</a>
+			<a class="mdl-navigation__link" href="individual_summaries.html">Individual Summaries</a>
+			<a class="mdl-navigation__link" href="team_summary.html">Team Summary</a>
+			<a class="mdl-navigation__link" href="team_info.html">Team Information</a>
+			<a class="mdl-navigation__link" href="account_info.html">Account Information</a>
+		</nav>
+	</div>
+	<p id="pressuretext">Pressure: </p>
+	<input type="radio" name="pressure" id="choosedrill" value="Drill">Drill
+	<input type="radio" name="pressure" id="choosescrimmage" value="Scrimmage" checked>Scrimmage
+	<button id="savebutton" onclick="writeData()">Save</button>
+	<!--button id="undobutton" onclick="undoSequence()">Undo</button-->
+	<button id="signOut" onclick="signOut()">Sign Out</button>
+	<div id="circles">
+	</div>
+	<div id="svgstuff">
+		<svg id="shots">
+		</svg>
+		<svg id="passes">
+		</svg>
+		<div id="dribbles">
+		</div>
+		<svg id="rebounds">
+		</svg>
+		<div id="actionbuttons">
+			<button id="checkbutton">Check</button>
+			<button id="xbutton">X</button>
+			<button id="notreb">Not Rebounded</button>
+			<button id="oobour" data-reason="Out of Bounds (Our Ball)">Out Of Bounds (Our Ball)</button>
+			<button id="oobopp" data-reason="Out of Bounds (Opponent's Ball)">Out Of Bounds (Opponent's Ball)</button>
+			<button id="opponent" data-reason="Opponent">Stolen by Opponent</button>
+		</div>
+		<svg id="court">
+			<g id="courtgroup">
+				<path
+				id="basiclines"
+				class="courtpath"
+				d="m 520.628,294.261 v -1.728 m -31.104,1.728 h 31.104 m -31.104,-1.728 v 1.728 m 31.104,-1.728 H 489.524 M 520.628,2.229 v 290.304 m -518.4,1.728 v -1.728 m 31.104,1.728 H 2.228 m 31.104,-1.728 v 1.728 M 2.228,292.533 H 33.332 M 476.564,2.229 h 44.064 m -45.792,0 H 325.364 m -277.344,0 h 149.472 m -151.2,0 H 2.228 M 292.52,488.661 h 228.108 m -290.292,0 H 2.228 m 229.835,0.05 a 29.375996,29.375996 0 0 1 58.73,0 z m 60.457,-0.05 a 31.104,31.104 0 0 0 -62.184,0 m 290.292,0 V 2.229 M 2.228,488.661 V 2.229 M 48.02,56.661 a 213.408,213.408 0 0 0 426.816,0 m -428.544,0 a 215.136,215.136 0 0 0 430.272,0 m -1.728,0 V 2.229 m -275.616,0 V 197.493 H 323.636 V 2.229 Z M 48.02,56.661 V 2.229 m 275.616,196.992 a 62.208,62.208 0 0 1 -124.416,0 z m -126.144,0 a 63.936003,63.936003 0 0 0 127.872,0 m 151.2,-142.56 V 2.229 M 46.292,56.661 V 2.229 m 279.072,0 V 74.805 M 197.492,199.221 V 2.229 m 127.872,0 V 199.221 M 522.356,0.5 H 0.5 v 489.889 h 521.856 z"
+				/></path>
+				<path
+				id="restrictedarea"
+				class="courtpath"
+				d="m 302.9,43.701 v 12.96 a 41.472,41.472 0 0 1 -82.944,0 v -12.96 h -1.728 v 12.96 a 43.200003,43.200003 0 0 0 86.4,0 v -12.96 z"
+				/></path>
+				<path
+				id="backboard"
+				class="courtpath"
+				d="m 292.532,38.517 v 5.184 h -62.208 v -5.184 z"
+				/></path>
+				<path
+				id="blocks"
+				class="courtpath"
+				d="m 332.276,181.941 v 1.728 h -6.912 v -1.728 z m 0,-32.832 v 1.728 h -6.912 v -1.728 z m 0,-32.832 v 1.728 h -6.912 v -1.728 z m 0,-41.472 v 10.368 h -6.912 V 74.805 Z m -6.912,76.032 v -1.728 M 197.492,74.805 V 85.173 H 190.58 V 74.805 Z m 0,108.864 v -1.728 h -6.912 v 1.728 z m 127.872,-65.664 v -1.728 m -127.872,32.832 h -6.912 v 1.728 h 6.912 z m 0,-32.832 v 1.728 h -6.912 v -1.728 z M 325.364,85.173 V 74.805 m 0,108.864 v -1.728"
+				/></path>
+			</g>
+		</svg>
+		<svg id="hoopsvg" width="18" height="18" onclick="chooseShot()">
+			<g id="hoopgroup">
+				<circle id="hoop" cx="9" cy="9" r="8">
+				</circle>
+			</g>
+		</svg>
+	</div>
+
+	<div id="playerdropdowndiv" class="dropdown">
+	</div>
+	<script src="../JavaScript/commonfunctions.js"></script>
+	<script src="../Libraries/jss.js"></script>
+	<script src="../Libraries/jquery-3.2.1.js"></script>
+	<script src="../Libraries/d3.min.js"></script>
+	<script src="../initializer.js"></script>
+</body>
+</html>

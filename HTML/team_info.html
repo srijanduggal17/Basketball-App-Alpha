@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Team Information</title>
+	<script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-messaging.js"></script>
+	<link rel="stylesheet" type="text/css" href="../CSS/team_info.css">
+	<script src="../initializer.js"></script>
+	<script src="../JavaScript/commonfunctions.js"></script>
+	<script src="../Libraries/jquery-3.2.1.js"></script>
+</head>
+<body>
+	<div id="generalinfo">
+		<h4>General Info</h4>
+		<table id="geninfotable">
+			<tr>
+				<td>Team Name: </td>
+				<td id="teamname"></td>
+				<td>
+					<input type='text' id='editteamname' class="edit">
+					<span id="teamnameaster" class="aster">*</span>
+				</td>
+			</tr>
+			<tr>
+				<td>Head Coach: </td>
+				<td id="headcoach"></td>
+				<td>
+					<input type='text' id='editheadcoach' class="edit">
+					<span id="headcoachaster" class="aster">*</span>
+				</td>
+			</tr>
+		</table>
+		<button id="editgeninfo">Edit</button>
+		<span id="editgeninfoaster" class="aster">*</span>
+	</div>
+	<!-- This section is the staff -->
+	<div id="staffdiv"> 
+		<h4>Staff</h4>
+
+		<!-- This table contains a row for each member -->
+		<table id="stafftable">
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th></th>
+				<th></th>
+			</tr>
+			<tr id="staffinputrow">
+				<td>
+					<input type="text" id="staffname" value="">
+					<span id="staffnameaster" class="aster">*</span>
+				</td>
+				<td>
+					<select id="roledropdown" class="dropdown">
+						<option value="">Select</option>
+						<option value="Assistant Coach">Assistant Coach</option>
+						<option value="Manager">Manager</option>
+						<option value="Other">Other</option>
+					</select>
+					<span id="roleaster" class="aster">*</span>
+				</td>
+				<td>
+					<button id="createstaff">+</button>
+				</td>
+			</tr>
+		</table>
+		
+		<!-- This section contains the temporary elements needed while editing a row -->
+		<select id="editroledropdown" class="dropdown">
+			<option value="">Select</option>
+			<option value="Assistant Coach">Assistant Coach</option>
+			<option value="Manager">Manager</option>
+			<option value="Other">Other</option>
+		</select>
+		<span id="editroleaster" class="aster">*</span>
+		<span id="staffeditaster" class="aster">*</span>
+
+		<div id="editstaffnamediv" class="editdivs">
+			<input type="text" id="editstaffname" value="">
+			<span id="editstaffnameaster" class="aster">*</span>
+		</div>
+
+		<button id="editstaff">Edit</button>
+		<span id="editstaffaster" class="aster">*</span>
+		<!-- end section -->
+	</div>
+
+	<!-- This section is the players -->
+	<div id="playersdiv">
+		<h4>Players</h4>
+
+		<!-- This table contains a row for each member -->
+		<table id="playertable">
+			<tr>
+				<th>Name</th>
+				<th>Position</th>
+				<th>Height</th>
+				<th>Number</th>
+			</tr>
+			<tr id="playerinputrow">
+				<td>
+					<input type="text" id="playername" value="">
+					<span id="playernameaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="text" id="playerposition" value="">
+					<span id="playerpositionaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="number" id="playerheightfeet" value="" min="0" max="8">
+					<span>'</span>
+					<span id="playerheightfeetaster" class="aster">*</span>
+					<input type="number" id="playerheightinches" value="" min="0" max="11">
+					<span>"</span>
+					<span id="playerheightinchesaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="number" id="playernumber" value="" min="0" max="99">
+					<span id="playernumberaster" class="aster">*</span>
+				</td>
+				<td>
+					<button onclick="createPlayer()">Add</button>
+				</td>
+			</tr>
+		</table>
+
+		<!-- This section contains the temporary elements needed while editing a row -->		
+		<div id="editplayernamediv" class="editdivs">
+			<input type="text" id="editplayername" value="">
+			<span id="editplayernameaster" class="aster">*</span>
+		</div>
+		<div id="editplayerpositiondiv" class="editdivs">
+			<input type="text" id="editplayerposition" value="">
+			<span id="editplayerpositionaster" class="aster">*</span>
+		</div>
+		<div id="editplayerheightdiv" class="editdivs">
+			<input type="number" id="editplayerheightfeet" value="" min="0" max="8">
+			<span>'</span>
+			<span id="editplayerheightfeetaster" class="aster">*</span>
+			<input type="number" id="editplayerheightinches" value="" min="0" max="11">
+			<span>"</span>
+			<span id="editplayerheightinchesaster" class="aster">*</span>
+		</div>
+		<div id="editplayernumberdiv" class="editdivs">
+			<input type="number" id="editplayernumber" value="" min="0" max="99">
+			<span id="editplayernumberaster" class="aster">*</span>
+		</div>	
+
+		<button id="editplayers">Edit</button>
+		<span id="playereditaster" class="aster">*</span>
+		<!-- end section -->
+	</div>
+	<button id="signOut" onclick="signOut()">Sign Out</button>
+	<script src="../JavaScript/team_info.js"></script>
+</body>
+</html>
