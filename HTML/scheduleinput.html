@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Create Team</title>	
+
+	<script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-messaging.js"></script>
+
+	<link rel="stylesheet" type="text/css" href="../CSS/scheduleinput.css">
+	<script src="../JavaScript/commonfunctions.js"></script>
+	<script src="../initializer.js"></script>
+	<script src="../Libraries/jquery-3.2.1.js"></script>
+</head>
+
+<body>
+	<div id="eventdiv">
+		<table id="eventtable">
+			<tr>
+				<th>Event</th>
+				<th>Date</th>
+				<th>Start Time</th>
+				<th>End Time</th>
+				<th>Location</th>
+				<th>Opponent</th>
+			</tr>
+			<tr id='eventinputrow'>
+				<td>
+					<button id="selectgame">Game</button><button id="selectpractice">Practice</button><span id="eventaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="date" id="neweventdate" value=""><span id="dateaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="time" id="neweventtimestart" value=""><span id="starttimeaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="time" id="neweventtimeend" value=""><span id="endtimeaster" class="aster">*</span>
+				</td>
+				<td>
+					<input type="text" id="neweventlocation" value=""><span id="locationaster" class="aster">*</span>
+					<div id="homeawaydiv">
+						<button id="selecthome">Home</button><button id="selectaway">Away</button><span id="homeawayaster" class="aster">*</span>
+					</div>
+				</td>
+				<td>
+					<div id="opponentdiv">
+						<input type="text" id="newopponent"><span id="opponentaster" class="aster">*</span>
+					</div>
+				</td>
+				<td>
+					<button id="makeevent">Add</button>
+				</td>
+				<td>
+				</td>
+			</tr>
+		</table>
+		<div id="editeventnamediv" class="editdivs">
+			<button id="editselectgame">Game</button><button id="editselectpractice">Practice</button><span id="editeventaster" class="aster">*</span>
+		</div>
+		<div id="editeventdatediv" class="editdivs">
+			<input type="date" id="editeventdate" value=""><span id="editdateaster" class="aster">*</span>
+		</div>
+		<div id="editeventtimestartdiv" class="editdivs">
+			<input type="time" id="editeventtimestart" value=""><span id="editstarttimeaster" class="aster">*</span>
+		</div>
+		<div id="editeventtimeenddiv" class="editdivs">
+			<input type="time" id="editeventtimeend" value=""><span id="editendtimeaster" class="aster">*</span>
+		</div>
+		<div id="editeventlocationdiv" class="editdivs">
+			<input type="text" id="editeventlocation" value=""><span id="editlocationaster" class="aster">*</span>
+		</div>
+		<div id="editeventopponentdiv" class="editdivs">
+			<input type="text" id="editeventopponent" value=""><span id="editopponentaster" class="aster">*</span>
+		</div>
+		<div id="edithomeawaydiv" class="editdivs">
+			<button id="editselecthome">Home</button><button id="editselectaway">Away</button><span id="edithomeawayaster" class="aster">*</span>
+		</div>
+		<span id="eventeditaster" class="aster">*</span>
+	</div>
+
+	<button id="finishbutton">Finish</button>
+	<button id="signOut">Sign Out</button>
+
+	<script src="../JavaScript/scheduleinput.js"></script>
+</body>
+</html>

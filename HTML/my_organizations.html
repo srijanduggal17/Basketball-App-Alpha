@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>My Organizations</title>
+	<script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-messaging.js"></script>
+	<link rel="stylesheet" type="text/css" href="../CSS/my_organizations.css">
+	<script src="../JavaScript/commonfunctions.js"></script>
+	<script src="../initializer.js"></script>
+</head>
+<body>
+	<div id="messagediv">
+		<h3>You currently have no organizations</h3>
+		<button id="createorg">Create Organization</button>
+		<button id="joinorg">Join Organization</button>
+	</div>
+	<div id="orgsdiv">
+	</div>
+	<div id="editdiv">
+		<input type="text" id="school"><span id="schoolaster" class="aster">*</span>
+		<input type="text" id="location"><span id="locationaster" class="aster">*</span><br>
+		<h3>Level</h3><span id="levelaster" class="aster">*</span>
+		<input type="radio" name="level" id="levelHS" value="HS"><span>High School</span><br>
+		<input type="radio" name="level" id="levelCO" value="CO"><span>College</span><br>
+		<button id="checkbutton">Check</button>
+	</div>
+	<button id="signOut" onclick="signOut()">Sign Out</button>
+	<div id="actiondiv">
+		<button id="addorgbutton">Add New Organization</button>
+		<button id="joinorgbutton">Join New Organization</button>
+		<button id="editbutton">Edit</button>
+		<button id="deletebutton">Delete Organizations</button>
+		<button id="donebutton">Done</button>
+	</div>
+	<script src="../JavaScript/my_organizations.js"></script>
+</body>
+</html>

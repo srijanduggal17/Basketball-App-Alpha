@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Create Organization</title>
+	<script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-database.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.1.2/firebase-messaging.js"></script>
+	<link rel="stylesheet" type="text/css" href="../CSS/create_organization.css">
+	<script src="../JavaScript/commonfunctions.js"></script>	
+	<script src="../initializer.js"></script>
+</head>
+<body>
+	<input type="text" id="school" placeholder="School"><span id="schoolaster" class="aster">*</span>
+	<input type="text" id="location" placeholder="Location"><span id="locationaster" class="aster">*</span><br>
+	<h3>Level</h3><span id="levelaster" class="aster">*</span>
+	<input type="radio" name="level" id="levelHS" value="HS"><span>High School</span><br>
+	<input type="radio" name="level" id="levelCO" value="CO"><span>College</span><br>
+	<button id="neworganization">Create Organization</button>
+	<button id="myorganization">My Organizations</button>
+	<button id="signout">Sign Out</button>
+	<script type="text/javascript" src="../JavaScript/create_organization.js"></script>
+</body>
+</html>

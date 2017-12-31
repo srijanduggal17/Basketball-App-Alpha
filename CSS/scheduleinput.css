@@ -1,0 +1,17 @@
+.aster {
+    color: red;
+    font-size: 20px;
+    display: none;
+}
+
+.editdivs {
+    display: none;
+}
+
+#opponentdiv {
+	display: none;
+}
+
+#homeawaydiv {
+	display: none;
+}

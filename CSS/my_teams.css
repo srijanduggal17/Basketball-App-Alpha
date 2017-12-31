@@ -1,0 +1,11 @@
+.teamdiv {
+	border: 2px solid black;
+}
+
+#donebutton {
+	display: none;
+}
+
+#messagediv {
+	display: none;
+}
