@@ -1,32 +1,31 @@
 var currentUser;
-var orgsdiv = document.getElementById("orgsdiv");
 
 var canedit = false;
 var isediting = false;
 var candelete = false;
 
-document.getElementById("editbutton").addEventListener("click", editOrgs);
+var allowedtext = /^[a-zA-Z ']+$/;
+var pagestatus = true;
+
+var myorgref;
+
 var editdiv = document.getElementById("editdiv");
-var levelaster = document.getElementById("levelaster");
-var schoolaster = document.getElementById("schoolaster");
-var locationaster = document.getElementById("locationaster");
 var schoolinput = document.getElementById("school");
 var locationinput = document.getElementById("location");
 var levelHS = document.getElementById("levelHS");
 var levelCO = document.getElementById("levelCO");
-document.getElementById("checkbutton").addEventListener("click", saveChanges);
-document.getElementById("deletebutton").addEventListener("click", deleteOrgs);
-var allowedtext = /^[a-zA-Z ']+$/;
-var pagestatus = true;
+var addorgbutton = document.getElementById("addorgbutton");
 var donebutton = document.getElementById("donebutton");
+
 donebutton.addEventListener("click", done);
+document.getElementById("joinorgbutton").addEventListener("click", joinOrg);
 document.getElementById("createorg").addEventListener("click", createOrganization);
 document.getElementById("joinorg").addEventListener("click", joinOrganization);
 document.getElementById("addorgbutton").addEventListener("click", addOrg);
-var addorgbutton = document.getElementById("addorgbutton");
-var joinorgbutton = document.getElementById("joinorgbutton");
-joinorgbutton.addEventListener("click", joinOrg);
-var myorgref;
+document.getElementById("checkbutton").addEventListener("click", saveChanges);
+document.getElementById("deletebutton").addEventListener("click", deleteOrgs);
+document.getElementById("editbutton").addEventListener("click", editOrgs);
+
 
 //Checks if user is signed in
 firebase.auth().onAuthStateChanged(function(user) {
@@ -57,7 +56,7 @@ firebase.auth().onAuthStateChanged(function(user) {
 					});
 				newdiv.setAttribute('id', myorgs.val()[org]);
 				newdiv.appendChild(newtext);
-				orgsdiv.appendChild(newdiv);
+				document.getElementById("orgsdiv").appendChild(newdiv);
 			}
 		}, function (error) {
 			console.error("User's organizations not pulled from database");
@@ -102,11 +101,11 @@ function orgPage() {
 	else if (candelete) {
 		let selectedorg = this;
 		let orgtoremove = database.ref('/organizationslist/' + selectedorg.id);
-		let userstoremove = [];
+		let userstorem = [];
 
 		orgtoremove.once("value", function(orgtorem) {
 			for (let i = 0; i < orgtorem.val()["numofmembers"]; i++) {
-				userstoremove.push(orgtorem.val()["members"][i]);
+				userstorem.push(orgtorem.val()["members"][i]);
 			}
 
 			if (orgtorem.val()["owner"] === currentUser.uid) {
@@ -147,75 +146,8 @@ function orgPage() {
 									console.log("Error code: " + error.code);
 								});
 
-							for (let i = 0; i < userstoremove.length; i++) {
-								database.ref('/users/' + userstoremove[i] + '/organizations/').once("value", function(orgslist) {
-									let myorgannum = 0;
-									for (const org in orgslist.val()) {
-										myorgannum += 1;
-									}
+							removeOrgFromUsers(userstorem);
 
-									for (const organ in orgslist.val()) {
-										if (orgslist.val()[organ] === selectedorg.id) {
-											database.ref('/users/' + userstoremove[i] + '/organizations/' + organ)
-												.remove()
-												.then(() => {
-													console.log("Organization removed from user's list");
-												})
-												.catch(error => {
-													console.error("Organization not removed from user's list");
-													console.log(error.message);
-													console.log("Error code: " + error.code);
-												});
-										}
-									}
-
-									if (myorgannum === 1) {
-										if (currentUser.uid === userstoremove[i]) {
-											console.log("No organizations");
-											document.getElementById("messagediv").style.display = "block";
-											document.getElementById("actiondiv").style.display = "none";											
-										}
-										database.ref('/orgteamstatus/' + userstoremove[i])
-											.set([false, false])
-											.then(() => {
-												console.log('orgteamstatus changed to: [false, false]');
-											})
-											.catch(error => {
-												console.error('orgteamstatus not changed to: [false, false]');
-												console.log(error.message);
-												console.log("Error code: " + error.code);
-											});
-									}
-									else if (myorgannum === 2) {
-										database.ref('/orgteamstatus/' + userstoremove[i] + '/0/')
-											.set(true)
-											.then(() => {
-												console.log("Orgteamstatus[0] updated to true");
-											})
-											.catch(error => {
-												console.error("Orgteamstatus[0] not updated to true");
-												console.log(error.message);
-											 	console.log("Error code: " + error.code);
-											});
-									}
-									else if (myorgannum > 2) {
-										database.ref('/orgteamstatus/' + userstoremove[i] + '/0/')
-											.set("true+")
-											.then(() => {
-												console.log("Orgteamstatus[0] updated to true+");
-											})
-											.catch(error => {
-												console.error("Orgteamstatus[0] not updated to true+");
-												console.log(error.message);
-												console.log("Error code: " + error.code);
-											});
-									}
-								}, function (error) {
-									console.error("Organizations not pulled for this user");
-									console.log(error.message);
-									console.log("Error code: " + error.code);
-								});
-							}
 						}, function (error) {
 							console.error("Data for organization to remove not pulled from database");
 							console.log(error.message);
@@ -238,6 +170,78 @@ function orgPage() {
 	}
 }
 
+function removeOrgFromUsers(userstoremove) {
+	for (let i = 0; i < userstoremove.length; i++) {
+		database.ref('/users/' + userstoremove[i] + '/organizations/').once("value", function(orgslist) {
+			let myorgannum = 0;
+			for (const org in orgslist.val()) {
+				myorgannum += 1;
+			}
+
+			for (const organ in orgslist.val()) {
+				if (orgslist.val()[organ] === selectedorg.id) {
+					database.ref('/users/' + userstoremove[i] + '/organizations/' + organ)
+						.remove()
+						.then(() => {
+							console.log("Organization removed from user's list");
+						})
+						.catch(error => {
+							console.error("Organization not removed from user's list");
+							console.log(error.message);
+							console.log("Error code: " + error.code);
+						});
+				}
+			}
+
+			if (myorgannum === 1) {
+				if (currentUser.uid === userstoremove[i]) {
+					console.log("No organizations");
+					document.getElementById("messagediv").style.display = "block";
+					document.getElementById("actiondiv").style.display = "none";											
+				}
+				database.ref('/orgteamstatus/' + userstoremove[i])
+					.set([false, false])
+					.then(() => {
+						console.log('orgteamstatus changed to: [false, false]');
+					})
+					.catch(error => {
+						console.error('orgteamstatus not changed to: [false, false]');
+						console.log(error.message);
+						console.log("Error code: " + error.code);
+					});
+			}
+			else if (myorgannum === 2) {
+				database.ref('/orgteamstatus/' + userstoremove[i] + '/0/')
+					.set(true)
+					.then(() => {
+						console.log("Orgteamstatus[0] updated to true");
+					})
+					.catch(error => {
+						console.error("Orgteamstatus[0] not updated to true");
+						console.log(error.message);
+					 	console.log("Error code: " + error.code);
+					});
+			}
+			else if (myorgannum > 2) {
+				database.ref('/orgteamstatus/' + userstoremove[i] + '/0/')
+					.set("true+")
+					.then(() => {
+						console.log("Orgteamstatus[0] updated to true+");
+					})
+					.catch(error => {
+						console.error("Orgteamstatus[0] not updated to true+");
+						console.log(error.message);
+						console.log("Error code: " + error.code);
+					});
+			}
+		}, function (error) {
+			console.error("Organizations not pulled for this user");
+			console.log(error.message);
+			console.log("Error code: " + error.code);
+		});
+	}
+}
+
 function editOrgs() {
 	canedit = true;
 	donebutton.style.display = "inline-block";
@@ -246,26 +250,30 @@ function editOrgs() {
 	addorgbutton.style.display = "none";
 }
 
+function verifySaveChanges() {
+	if (schoolinput.value === "" || schoolinput.value.match(allowedtext) === null) {
+		document.getElementById("schoolaster").style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		document.getElementById("schoolaster").style.display = "none";
+	}
+	if (locationinput.value === "" || locationinput.value.match(allowedtext) === null) {
+		document.getElementById("locationaster").style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		document.getElementById("locationaster").style.display = "none";
+	}
+}
+
 function saveChanges() {
 	canedit = false;
 
 	let orgtoedit = this.parentNode.parentNode;
 
 	//Asterisks
-	if (schoolinput.value === "" || schoolinput.value.match(allowedtext) === null) {
-		schoolaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		schoolaster.style.display = "none";
-	}
-	if (locationinput.value === "" || locationinput.value.match(allowedtext) === null) {
-		locationaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		locationaster.style.display = "none";
-	}
+	verifySaveChanges();
 
 	if (pagestatus) {
 		//Update database

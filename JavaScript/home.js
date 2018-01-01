@@ -22,133 +22,97 @@ firebase.auth().onAuthStateChanged(function(user) {
 	}
 });
 
-database.ref("/teamslist/" + localStorage.currentteam + "/schedule/")
-		.once("value",function(schedule) {
-			for (const event in schedule.val()) {
+function makeEventDiv(evtype, evnum, nextev, title, sched) {
+	let newopp = document.createElement('p');
+	let newdate = document.createElement('p');
+	let newtime = document.createElement('p');
+	let newloc = document.createElement('p');
 
-				if (schedule.val()[event]["Event"] === "Game") {
-					let inputdate = schedule.val()[event]["Date"];
-					let splitdate = inputdate.split("-");
-					let inputendtime = schedule.val()[event]["End Time"];
-					let splitendtime = inputendtime.split(":");
-					let input = new Date(splitdate[0], parseInt(splitdate[1]) - 1, splitdate[2], splitendtime[0],splitendtime[1]);
-					let gametime = input.getTime();
+	if (evtype === "Game") {
+		newopp.innerHTML = "Opponent: " + capitalizeName(sched[nextev[0]]["Opponent"]);
+		evnum.appendChild(newopp);
+	}
 
-					if (gametime > timenow && gametime < nextgame[1]) {
-						nextgame = [event, gametime];
-					}
-				}
-				if (schedule.val()[event]["Event"] === "Practice") {
-					let inputdate = schedule.val()[event]["Date"];
-					let splitdate = inputdate.split("-");
-					let inputendtime = schedule.val()[event]["End Time"];
-					let splitendtime = inputendtime.split(":");
-					let input = new Date(splitdate[0], parseInt(splitdate[1]) - 1, splitdate[2], splitendtime[0],splitendtime[1]);
-					let practicetime = input.getTime();
+	newdate.innerHTML = "Date of " + evtype + ": " + sched[nextev[0]].Date;
+	newtime.innerHTML = "Time: " + sched[nextev[0]]["Start Time"] + " - " + sched[nextev[0]]["End Time"];
+	newloc.innerHTML = "Location: " + capitalizeName(sched[nextev[0]]["Location"]);	
 
-					if (practicetime > timenow && practicetime < nextpractice[1]) {
-						nextpractice = [event, practicetime];
-					}
-				}
-			}
+	evnum.appendChild(title);
+	evnum.appendChild(newdate);
+	evnum.appendChild(newtime);
+	evnum.appendChild(newloc);
+	evnum.setAttribute('data-key',nextev[0]);
+	evnum.addEventListener("click",homePage);
+}
 
-			var gametitle = document.createElement('h1');
-			gametitle.innerHTML = "Next Game";
-			var practicetitle = document.createElement('h1');
-			practicetitle.innerHTML = "Next Practice";
+function newAlterDiv(evtype, evnum, title) {
+	let newinfo = document.createElement('p');
+	newinfo.innerHTML = "No upcoming " + evtype;
+	evnum.appendChild(title);
+	evnum.appendChild(newinfo);
+}
 
-			if (nextgame[1] >= nextpractice[1]) {
-				if (nextgame[1] != future.getTime()) {
-					let gameopp = document.createElement('p');
-					let gamedate = document.createElement('p');
-					let gametime = document.createElement('p');
-					let gameloc = document.createElement('p');
-					gameopp.innerHTML = "Opponent: " + capitalizeName(schedule.val()[nextgame[0]]["Opponent"]);
-					gamedate.innerHTML = "Date of game: " + schedule.val()[nextgame[0]].Date;
-					gametime.innerHTML = "Time: " + schedule.val()[nextgame[0]]["Start Time"] + " - " + schedule.val()[nextgame[0]]["End Time"];
-					gameloc.innerHTML = "Location: " + capitalizeName(schedule.val()[nextgame[0]]["Location"]);
-					event2.appendChild(gametitle);
-					event2.appendChild(gameopp);
-					event2.appendChild(gamedate);
-					event2.appendChild(gametime);
-					event2.appendChild(gameloc);
-					event2.setAttribute('data-key',nextgame[0]);
-					event2.addEventListener("click",homePage);
-				}
-				else {
-					let gameinfo = document.createElement('p');
-					gameinfo.innerHTML = "No upcoming games";
-					event2.appendChild(gametitle);
-					event2.appendChild(gameinfo);
-				}
-				if (nextpractice[1] != future.getTime()) {
-					let practicedate = document.createElement('p');
-					let practicetime = document.createElement('p');
-					let practiceloc = document.createElement('p');
-					practicedate.innerHTML = "Date of practice: " + schedule.val()[nextpractice[0]].Date;
-					practicetime.innerHTML = "Time: " + schedule.val()[nextpractice[0]]["Start Time"] + " - " + schedule.val()[nextpractice[0]]["End Time"];
-					practiceloc.innerHTML = "Location: " + capitalizeName(schedule.val()[nextpractice[0]]["Location"]);
-					event1.appendChild(practicetitle);
-					event1.appendChild(practicedate);
-					event1.appendChild(practicetime);
-					event1.appendChild(practiceloc);
-					event1.setAttribute('data-key', nextpractice[0]);
-					event1.addEventListener("click", homePage);
-				}
-				else {
-					let practiceinfo = document.createElement('p');
-					practiceinfo.innerHTML = "No upcoming practices";
-					event1.appendChild(practicetitle);
-					event1.appendChild(practiceinfo);
-				}
-			}
-			else {
-				if (nextgame[1] != future.getTime()) {
-					let gameopp = document.createElement('p');
-					let gamedate = document.createElement('p');
-					let gametime = document.createElement('p');
-					let gameloc = document.createElement('p');
-					gameopp.innerHTML = "Opponent: " + capitalizeName(schedule.val()[nextgame[0]]["Opponent"]);
-					gamedate.innerHTML = "Date of game: " + schedule.val()[nextgame[0]].Date;
-					gametime.innerHTML = "Time: " + schedule.val()[nextgame[0]]["Start Time"] + " - " + schedule.val()[nextgame[0]]["End Time"];
-					gameloc.innerHTML = "Location: " + capitalizeName(schedule.val()[nextgame[0]]["Location"]);
-					event1.appendChild(gametitle);
-					event1.appendChild(gameopp);
-					event1.appendChild(gamedate);
-					event1.appendChild(gametime);
-					event1.appendChild(gameloc);
-					event1.setAttribute('data-key', nextgame[0]);
-					event1.addEventListener("click", homePage);
-				}
-				else {
-					let gameinfo = document.createElement('p');
-					gameinfo.innerHTML = "No upcoming games";
-					event1.appendChild(gametitle);
-					event1.appendChild(gameinfo);
-				}
-				if (nextpractice[1] != future.getTime()) {
-					let practicedate = document.createElement('p');
-					let practicetime = document.createElement('p');
-					let practiceloc = document.createElement('p');
-					practicedate.innerHTML = "Date of practice: " + schedule.val()[nextpractice[0]].Date;
-					practicetime.innerHTML = "Time: " + schedule.val()[nextpractice[0]]["Start Time"] + " - " + schedule.val()[nextpractice[0]]["End Time"];
-					practiceloc.innerHTML = "Location: " + capitalizeName(schedule.val()[nextpractice[0]]["Location"]);
-					event2.appendChild(practicetitle);
-					event2.appendChild(practicedate);
-					event2.appendChild(practicetime);
-					event2.appendChild(practiceloc);
-					event2.setAttribute('data-key', nextpractice[0]);
-					event2.addEventListener("click",homePage);
-				}
-				else {
-					let practiceinfo = document.createElement('p');
-					practiceinfo.innerHTML = "No upcoming practices";
-					event2.appendChild(practicetitle);
-					event2.appendChild(practiceinfo);
-				}
+function findNextEvent(sched) {
+	for (const event in sched) {
+
+		if (sched[event]["Event"] === "Game") {
+			let inputdate = sched[event]["Date"];
+			let splitdate = inputdate.split("-");
+			let inputendtime = sched[event]["End Time"];
+			let splitendtime = inputendtime.split(":");
+			let input = new Date(splitdate[0], parseInt(splitdate[1]) - 1, splitdate[2], splitendtime[0],splitendtime[1]);
+			let gametime = input.getTime();
+
+			if (gametime > timenow && gametime < nextgame[1]) {
+				nextgame = [event, gametime];
 			}
 		}
-		,function (error) {
+		if (sched[event]["Event"] === "Practice") {
+			let inputdate = sched[event]["Date"];
+			let splitdate = inputdate.split("-");
+			let inputendtime = sched[event]["End Time"];
+			let splitendtime = inputendtime.split(":");
+			let input = new Date(splitdate[0], parseInt(splitdate[1]) - 1, splitdate[2], splitendtime[0],splitendtime[1]);
+			let practicetime = input.getTime();
+
+			if (practicetime > timenow && practicetime < nextpractice[1]) {
+				nextpractice = [event, practicetime];
+			}
+		}
+	}
+}
+
+function makeEvents(ev1, ev2, sched) {
+	let gametitle = document.createElement('h1');
+	gametitle.innerHTML = "Next Game";
+	let practicetitle = document.createElement('h1');
+	practicetitle.innerHTML = "Next Practice";
+
+	if (nextgame[1] != future.getTime()) {
+		makeEventDiv("game", ev1, nextgame, gametitle, sched);
+	}
+	else {
+		newAlterDiv("games", ev1, gametitle);
+	}
+	if (nextpractice[1] != future.getTime()) {
+		makeEventDiv("practice", ev2, nextpractice, practicetitle, sched);
+	}
+	else {
+		newAlterDiv("practices", ev2, practicetitle);
+	}
+}
+
+database.ref("/teamslist/" + localStorage.currentteam + "/schedule/")
+		.once("value",function(schedule) {
+			findNextEvent(schedule.val());
+
+			if (nextgame[1] >= nextpractice[1]) {
+				makeEvents(event2, event1, schedule.val());
+			}
+			else {
+				makeEvents(event1, event2, schedule.val());
+			}
+		}, function (error) {
 			console.error("Schedule information not pulled from database");
 		    console.log(error.message);
 		    console.log("Error code: " + error.code);

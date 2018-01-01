@@ -14,6 +14,7 @@ var schoolaster = document.getElementById("schoolaster");
 var locationaster = document.getElementById("locationaster");
 
 var myorgref;
+var pushkey;
 
 firebase.auth().onAuthStateChanged(function(user) {
 	if (user) {
@@ -36,46 +37,19 @@ if (localStorage.orgstatus === "+") {
 
 function newOrganization() {
 	//Get values of input fields
-	var school = document.getElementById('school').value;
-	var location = document.getElementById('location').value;
-	var level = "";
+	var schoolin = document.getElementById('school').value;
+	var locationin = document.getElementById('location').value;
+	var levelin = "";
 
-	if(document.getElementById('levelCO').checked) {
-		level = "CO";
-		levelaster.style.display = "none";
-	}
-	else if(document.getElementById('levelHS').checked) {
-		level = "HS";
-		levelaster.style.display = "none";
-	}
-	else {
-		pagestatus = false;
-		levelaster.style.display = "inline";
-	}
-
-	if (school === "" || school.match(allowedtext) === null) {
-		schoolaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		schoolaster.style.display = "none";
-	}
-
-	if (location === "" || location.match(allowedtext) === null) {
-		locationaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		locationaster.style.display = "none";
-	}
+	verifyNewOrg(levelin, school, location);
 
 	//Push organization to database
 	if (pagestatus) {
 		let neworganization = {
 			owner: currentUser.uid,
-			location: capitalizeName(location),
-			name: capitalizeName(school),
-			level: level,
+			location: capitalizeName(locationin),
+			name: capitalizeName(schoolin),
+			level: levelin,
 			complete: false,
 			numofmembers: 1,
 			members: {
@@ -83,66 +57,7 @@ function newOrganization() {
 			}
 		};
 
-		let pushkey = database.ref('/organizationslist/').push().key;
-		let updates = {};
-		updates[pushkey] = neworganization;
-
-		//Push organization to organization list
-		let pushorg = database.ref('/organizationslist/')
-			.update(updates)
-			.then(() => {
-				console.log('Organization pushed to organizationslist');
-			});
-
-		let pushtouser = database.ref('/users/' + currentUser.uid + '/organizations/')
-			.push(pushkey)
-			.then(() => {
-				console.log("Organization pushed to user");
-				
-			});
-
-		Promise.all([pushorg, pushtouser])
-			.then(() => {
-				//Set orgstatus as true
-				if (localStorage.orgstatus === "+") {
-					database.ref('/orgteamstatus/' + currentUser.uid)
-						.set({
-							0: "true+",
-							1: false
-						})
-						.then(() => {
-							console.log("Orgteamstatus updated to: " + ["true+", false]);
-							localStorage.removeItem("orgstatus");
-							localStorage.setItem("currentorganization",pushkey)
-							window.location.href = "../HTML/create_team.html";
-						})
-						.catch(error => {
-							console.error("Orgteamstatus not updated to: " + ["true+", false]);
-							console.log(error.message);
-							console.log("Error code: " + error.code);
-						});
-				}
-
-				else {
-					database.ref('/orgteamstatus/' + currentUser.uid + '/0/')
-						.set(true)
-						.then(() => {
-							console.log("Orgteamstatus[0] updated to true");
-							localStorage.setItem("currentorganization",pushkey)
-							window.location.href = "../HTML/create_team.html";
-						})
-						.catch(error => {
-							console.error("Orgteamstatus[0] not updated to true");
-							console.log(error.message);
-							console.log("Error code: " + error.code);
-						});
-				}
-			})
-			.catch(error => {
-				console.error("Organization not pushed to user or organization not pushed to orgslist")
-				console.log(error.message);
-				console.log("Error code: " + error.code);
-			});
+		pushOrg();
 
 		//Clear values of input fields
 		document.getElementById('school').value = "";
@@ -196,4 +111,102 @@ function myOrg() {
 		 	console.log(error.message);
 		 	console.log("Error code: " + error.code);
 	});
+}
+
+function setOrgteamstatus() {
+	//Set orgstatus as true
+	if (localStorage.orgstatus === "+") {
+		database.ref('/orgteamstatus/' + currentUser.uid)
+			.set({
+				0: "true+",
+				1: false
+			})
+			.then(() => {
+				console.log("Orgteamstatus updated to: " + ["true+", false]);
+				localStorage.removeItem("orgstatus");
+				localStorage.setItem("currentorganization",pushkey)
+				window.location.href = "../HTML/create_team.html";
+			})
+			.catch(error => {
+				console.error("Orgteamstatus not updated to: " + ["true+", false]);
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+			});
+	}
+
+	else {
+		database.ref('/orgteamstatus/' + currentUser.uid + '/0/')
+			.set(true)
+			.then(() => {
+				console.log("Orgteamstatus[0] updated to true");
+				localStorage.setItem("currentorganization",pushkey)
+				window.location.href = "../HTML/create_team.html";
+			})
+			.catch(error => {
+				console.error("Orgteamstatus[0] not updated to true");
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+			});
+	}
+
+	pushkey = null;
+}
+
+function verifyNewOrg(level, school, location) {
+	if(document.getElementById('levelCO').checked) {
+		level = "CO";
+		levelaster.style.display = "none";
+	}
+	else if(document.getElementById('levelHS').checked) {
+		level = "HS";
+		levelaster.style.display = "none";
+	}
+	else {
+		pagestatus = false;
+		levelaster.style.display = "inline";
+	}
+
+	if (school === "" || school.match(allowedtext) === null) {
+		schoolaster.style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		schoolaster.style.display = "none";
+	}
+
+	if (location === "" || location.match(allowedtext) === null) {
+		locationaster.style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		locationaster.style.display = "none";
+	}
+}
+
+function pushOrg() {
+	pushkey = database.ref('/organizationslist/').push().key;
+	let updates = {};
+	updates[pushkey] = neworganization;
+
+	//Push organization to organization list
+	let pushorg = database.ref('/organizationslist/')
+		.update(updates)
+		.then(() => {
+			console.log('Organization pushed to organizationslist');
+		});
+
+	let pushtouser = database.ref('/users/' + currentUser.uid + '/organizations/')
+		.push(pushkey)
+		.then(() => {
+			console.log("Organization pushed to user");
+			
+		});
+
+	Promise.all([pushorg, pushtouser])
+		.then(setOrgteamstatus)
+		.catch(error => {
+			console.error("Organization not pushed to user or organization not pushed to orgslist")
+			console.log(error.message);
+			console.log("Error code: " + error.code);
+		});
 }

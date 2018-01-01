@@ -125,49 +125,12 @@ function joinOrg() {
 	);
 
 	Promise.all(promarray)
-		.then(() => {
-			if (localStorage.orgstatus === "+") {
-				database.ref('/orgteamstatus/' + currentUser.uid)
-					.set({
-						0: "true+",
-						1: true
-					})
-					.then(() => {
-						console.log("Orgteamstatus updated to: " + ["true+", true]);
-						localStorage.removeItem("orgstatus");
-						window.location.href = "../HTML/my_organizations.html";
-					})
-					.catch(error => {
-						console.error("Orgteamstatus not updated to: " + ["true+", true]);
-						console.log(error.message);
-						console.log("Error code: " + error.code);
-					});
-			}
-			else {
-				database.ref('/orgteamstatus/' + currentUser.uid)
-					.set({
-						0: true,
-						1: true
-					})
-					.then(() => {
-						console.log("Orgteamstatus updated to: " + [true, true]);
-						window.location.href = "../HTML/my_organizations.html";
-					})
-					.catch(error => {
-						console.error("Orgteamstatus not updated to: " + [true, true]);
-						console.log(error.message);
-					 	console.log("Error code: " + error.code);
-					});
-			}	
-		})
+		.then(updateOrgteamstatus)
 		.catch(error => {
 			console.error("User not pushed to org / num of members not updated / org not pushed to user's list");
 			console.log(error.message);
 		 	console.log("Error code: " + error.code);
 		});
-
-
-
 }
 
 function createOrganization() {
@@ -257,4 +220,40 @@ function cancel() {
 			console.log(error.message);
 		 	console.log("Error code: " + error.code);
 		});
+}
+
+function updateOrgteamstatus() {
+	if (localStorage.orgstatus === "+") {
+		database.ref('/orgteamstatus/' + currentUser.uid)
+			.set({
+				0: "true+",
+				1: true
+			})
+			.then(() => {
+				console.log("Orgteamstatus updated to: " + ["true+", true]);
+				localStorage.removeItem("orgstatus");
+				window.location.href = "../HTML/my_organizations.html";
+			})
+			.catch(error => {
+				console.error("Orgteamstatus not updated to: " + ["true+", true]);
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+			});
+	}
+	else {
+		database.ref('/orgteamstatus/' + currentUser.uid)
+			.set({
+				0: true,
+				1: true
+			})
+			.then(() => {
+				console.log("Orgteamstatus updated to: " + [true, true]);
+				window.location.href = "../HTML/my_organizations.html";
+			})
+			.catch(error => {
+				console.error("Orgteamstatus not updated to: " + [true, true]);
+				console.log(error.message);
+			 	console.log("Error code: " + error.code);
+			});
+	}	
 }
