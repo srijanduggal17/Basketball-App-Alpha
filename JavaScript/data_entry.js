@@ -1,11 +1,121 @@
 window.$ = window.jQuery = nodeRequire('jquery');
 
-//Old stuff?
-var indexofpractice;
-var practicingarray = [];
-var currentsequence;
+//Display variables
+//Window.innerHeight is 647
+const hoopx = .4*window.innerHeight;
+const hoopy = .0866*window.innerHeight;
+const circleradius = .0247*window.innerHeight;
+const circlesvgwidth = .049459*window.innerHeight;
+const headmag = (15/647)*window.innerHeight;
+var offsetobj = courtsvg.getBoundingClientRect();
+var leftoffset = offsetobj.left;
+var topoffset = offsetobj.top;
 
+//DOM elements
+var checkbutton = document.getElementById('checkbutton');
+var xbutton = document.getElementById('xbutton');
+var notrebbutton = document.getElementById('notreb');
+var opponentbutton = document.getElementById('opponent');
+var oobourbutton = document.getElementById('oobour');
+var ooboppbutton = document.getElementById('oobopp')
+var pagecontentdiv = document.getElementById('pagecontent');
+var actionbuttons = document.getElementById('actionbuttons');
+var hoop = document.getElementById('hoop');
+var playerdropdowndiv = document.getElementById("playerdropdowndiv");
+var courtsvg = document.getElementById("court");
+var hoopsvg = document.getElementById('hoopsvg');
+
+//Data Variables
+var newevent = {};
+var newevent2 = {};
+var currentevent;
+var currentplayer;
+var player1;
+var currentsequence;
 var currentUser;
+
+var locationtimer = 0;
+var locationarray = [];
+
+var currentcircle = 0;
+var currentpass = 0;
+var currentdribble = 0;
+var currentshot = 0;
+var currentrebound = 0;
+
+const numdec = 3;
+
+var pressure = "Scrimmage";
+
+const eventtype = localStorage.currentevent.split(",")[0].toLowerCase() + "s";
+const eventkey = localStorage.currentevent.split(",")[1];
+
+//State Variables
+var abletopass = false;
+var abletoshoot = false;
+var abletodribble = false;
+var abletorebound = false;
+
+var passwasattempted = false;
+var shotwasattempted = false;
+var reboundwasattempted = 0;
+
+var passoccurred = false;
+var dribbleoccurred = false;
+
+//Event listeners
+checkbutton.addEventListener("click", chooseAction);
+xbutton.addEventListener("click", chooseAction);
+notrebbutton.addEventListener("click", notRebounded);
+opponentbutton.addEventListener("click", lossTo);
+oobourbutton.addEventListener("click", lossTo);
+ooboppbutton.addEventListener("click", lossTo);
+document.getElementById("choosedrill").addEventListener("click", choosePressure);
+document.getElementById("choosescrimmage").addEventListener("click", choosePressure);
+courtsvg.addEventListener("click", inputData);
+hoopsvg.setAttribute('onmouseout','uncolorHoop()');
+//Change to event listener
+
+
+function setupDOM() {
+	//Entire svg
+	jss.set('#svgstuff', {
+		'width': '' + .808124*window.innerHeight + 'px',
+		'height': '' + .758714*window.innerHeight + 'px',
+	});
+
+	//Court sizing
+	document.getElementById("courtgroup").setAttribute('transform','scale(' + .808124*window.innerHeight/522.85602 + ',' + .758714*window.innerHeight/490.888 + ')');
+	courtsvg.setAttribute('width',''+.808124*window.innerHeight+'');
+	courtsvg.setAttribute('height',''+.758714*window.innerHeight+'');
+	document.getElementById("hoopgroup").setAttribute('transform','scale(' + .808124*window.innerHeight/522.85602 + ',' + .758714*window.innerHeight/490.888 + ')');
+
+	//Player circles
+	jss.set('.circleforplayers', {
+		'width': '' + .0495*window.innerHeight + 'px',
+		'height': '' + .0495*window.innerHeight + 'px',
+	});
+
+	//Shot Lines
+	d3.select("#shots")
+		.attr('width',.808124*window.innerHeight)
+		.attr('height',.758714*window.innerHeight);
+
+	//Pass Lines
+	d3.select("#passes")
+		.attr('width',.808124*window.innerHeight)
+		.attr('height',.758714*window.innerHeight);
+
+	//Dribble Lines
+	d3.select("#dribbles")
+		.attr('width',.808124*window.innerHeight)
+		.attr('height',.758714*window.innerHeight);
+
+	//Rebound Lines
+	d3.select("#rebounds")
+		.attr('width',.808124*window.innerHeight)
+		.attr('height',.758714*window.innerHeight);	
+}
 
 firebase.auth().onAuthStateChanged(function(user) {
 	if (user) {
@@ -20,16 +130,10 @@ firebase.auth().onAuthStateChanged(function(user) {
 		window.location.href = "../HTML/sign_in_up.html";
 	}
 });
-//Window.innerHeight is 647
-
-document.getElementById("choosedrill").addEventListener("click", choosePressure);
-document.getElementById("choosescrimmage").addEventListener("click", choosePressure);
-
-var playerdropdowndiv = document.getElementById("playerdropdowndiv");
-var eventtype = localStorage.currentevent.split(",")[0].toLowerCase() + "s";
-var eventkey = localStorage.currentevent.split(",")[1];
 
 window.onload = function loadstuff() {
+	setupDOM();
+
 	database.ref('/teamslist/' + localStorage.currentteam).once("value", function(teamdata) {
 		let playerslist = teamdata.val()[eventtype][eventkey]["Player Status"];
 
@@ -37,7 +141,6 @@ window.onload = function loadstuff() {
 
 		for (const player in playerslist) {
 			if (playerslist[player] === "Practicing") {
-				//Fix stuff	
 				let newplayerelem = document.createElement("p");
 				newplayerelem.innerHTML = teamdata.val()["players"][player]["Name"];
 				newplayerelem.id = player;
@@ -48,7 +151,6 @@ window.onload = function loadstuff() {
 					"Player" : player,
 				};
 				playerdata.push(newplayerdata)
-				practicingarray.push(player);
 			}
 		}
 
@@ -60,8 +162,6 @@ window.onload = function loadstuff() {
 		console.log("Error code: " + error.code);
 	});
 }
-
-var pressure = "Scrimmage";
 
 function choosePressure() {
 	pressure = this.value;
@@ -75,40 +175,12 @@ function uncolorHoop() {
 	hoop.style.fill = "none";
 }
 
-jss.set('#svgstuff', {
-	'width': '' + .808124*window.innerHeight + 'px',
-	'height': '' + .758714*window.innerHeight + 'px',
-});
-
-/////////////////////////////////////////
-//Court SVG
-var court = document.getElementById("courtgroup");
-court.setAttribute('transform','scale(' + .808124*window.innerHeight/522.85602 + ',' + .758714*window.innerHeight/490.888 + ')');
-var courtsvg = document.getElementById("court");
-courtsvg.setAttribute('width',''+.808124*window.innerHeight+'');
-courtsvg.setAttribute('height',''+.758714*window.innerHeight+'');
-
-//Hoop SVG
-var hoopgroup = document.getElementById("hoopgroup");
-hoopgroup.setAttribute('transform','scale(' + .808124*window.innerHeight/522.85602 + ',' + .758714*window.innerHeight/490.888 + ')');
-var hoopsvg = document.getElementById('hoopsvg');
-
-//Hoop Hover properties
-hoopsvg.setAttribute('onmouseout','uncolorHoop()');
-
-courtsvg.addEventListener("click", inputData);
-var numdec = 3;
-
-var offsetobj = courtsvg.getBoundingClientRect();
-var leftoffset = offsetobj.left;
-var topoffset = offsetobj.top;
-
 function inputData() {
 	let courtloc = [parseFloat(((event.pageX - leftoffset)/offsetobj.width).toFixed(numdec)), parseFloat(((event.pageY - topoffset)/offsetobj.height).toFixed(numdec))];
 
-	var dt = new Date();
+	let dt = new Date();
 
-	if (pressure === "Drill" && shotwasattempted === 0) {
+	if (pressure === "Drill" && !shotwasattempted) {
 		newevent = {
 			"Action" : "",
 			"Location" : courtloc,
@@ -118,16 +190,15 @@ function inputData() {
 		playerdropdowndiv.style.display = "block";
 		playerdropdowndiv.style.left = event.pageX + 'px'; //offsetobj.width*courtloc[0] + leftoffset + 'px';
 		playerdropdowndiv.style.top = event.pageY + 'px';  //offsetobj.height*courtloc[1] + topoffset + 'px';
-	}
-
+	} 
 	else if (pressure === "Scrimmage") {
-		if (passwasattempted !== 1 && shotwasattempted !== 1) {
+		if (!passwasattempted && !shotwasattempted) {
 			playerdropdowndiv.style.display = "block";
 			playerdropdowndiv.style.left = event.pageX + 'px';
 			playerdropdowndiv.style.top = event.pageY + 'px';
 		}
 
-		if (passoccurred === 0 && dribbleoccurred === 0 && (abletopass + abletoshoot + abletodribble + abletorebound) === 0 && passwasattempted === 0) {
+		if (!passoccurred && !dribbleoccurred && !abletopass && !abletoshoot && !abletodribble && !abletorebound && !passwasattempted) {
 			newevent = {
 				"Sequence" : currentsequence,
 				"Event" : currentevent,
@@ -137,7 +208,7 @@ function inputData() {
 			};
 		}
 
-		else if (abletorebound === 1) {
+		else if (abletorebound) {
 			newevent["Rebounded"] = "Yes";
 			newevent["Rebound Location"] = courtloc;
 
@@ -150,7 +221,7 @@ function inputData() {
 				.then(() => {
 					console.log("Event pushed to database");
 		
-					abletorebound = 0;
+					abletorebound = false;
 					currentevent = 0;
 					currentsequence += 1;
 
@@ -188,8 +259,8 @@ function inputData() {
 				});
 		}
 
-		else if (abletopass === 1 && passoccurred === 0 && passwasattempted === 0 && dribbleoccurred === 0) {
-			passwasattempted = 1;
+		else if (abletopass && !passoccurred && !passwasattempted && !dribbleoccurred) {
+			passwasattempted = true;
 
 			newevent2 = {
 				"Sequence" : currentsequence,
@@ -201,15 +272,15 @@ function inputData() {
 
 			newevent["Event"] += "-a";
 
-			abletopass = 0;
-			abletoshoot = 0;
-			abletodribble = 0;
+			abletopass = false;
+			abletoshoot = false;
+			abletodribble = false;
 
 			hoopsvg.setAttribute('onmouseover','');
 			document.getElementById(currentplayer).style.display = "none";
 		}
 
-		else if (abletopass === 1 && passoccurred === 0 && passwasattempted === 0 && dribbleoccurred === 1) {
+		else if (abletopass && !passoccurred && !passwasattempted && dribbleoccurred) {
 			let pushkey = database.ref().push().key;
 			let updates = {};
 			updates[pushkey] = newevent;
@@ -219,17 +290,17 @@ function inputData() {
 				.then(() => {
 					console.log("Event pushed to database");
 
-					passwasattempted = 1;
+					passwasattempted = true;
 
-					abletoshoot = 0;
-					abletopass = 0;
-					abletodribble = 0;
+					abletoshoot = false;
+					abletopass = false;
+					abletodribble = false;
 					
 					hoopsvg.setAttribute('onmouseover','');
 
-					dribbleoccurred = 0;
+					dribbleoccurred = false;
 
-					var lastlocation = newevent["Location"][newevent["Location"].length - 1];
+					let lastlocation = newevent["Location"][newevent["Location"].length - 1];
 
 					newevent = {};
 					newevent = {
@@ -257,13 +328,13 @@ function inputData() {
 				});
 		}
 
-		else if (abletopass === 1 && passoccurred === 1 && passwasattempted === 0 && dribbleoccurred === 0) {
-			passoccurred = 0;
-			passwasattempted = 1;
+		else if (abletopass && passoccurred && !passwasattempted && !dribbleoccurred) {
+			passoccurred = false;
+			passwasattempted = true;
 
-			abletopass = 0;
-			abletodribble = 0;
-			abletoshoot = 0;
+			abletopass = false;
+			abletodribble = false;
+			abletoshoot = false;
 
 			hoopsvg.setAttribute('onmouseover','');
 			
@@ -323,26 +394,29 @@ function choosePlayer() {
 
 		currentplayer = this.id;
 
-		d3.select("#circles").append('svg')
-							.attr('id','circle0')
-							.attr('width',circlesvgwidth)
-							.attr('height',circlesvgwidth)
-							.attr('class','circleforplayers')
-							.style('left',newevent["Location"][0]*offsetobj.width + leftoffset - circleradius)
-							.style('top',newevent["Location"][1]*offsetobj.height + topoffset - circleradius)
-							.style('display','block')
-							.append('circle')
-							.attr('cx',.5*circlesvgwidth)
-							.attr('cy',.5*circlesvgwidth)
-							.attr('r',.0231839*window.innerHeight);
-		d3.select("#circle0").append('text')
-							.attr('x','50%')
-							.attr('y','65%')
-							.attr('text-anchor','middle')
-							.style('stroke-width','0')
-							.style('fill','#000')
-							.style('font-size',.02163833*window.innerHeight)
-							.text(getInitials(this.innerHTML));
+		d3.select("#circles")
+			.append('svg')
+				.attr('id','circle0')
+				.attr('width',circlesvgwidth)
+				.attr('height',circlesvgwidth)
+				.attr('class','circleforplayers')
+				.style('left',newevent["Location"][0]*offsetobj.width + leftoffset - circleradius)
+				.style('top',newevent["Location"][1]*offsetobj.height + topoffset - circleradius)
+				.style('display','block')
+				.append('circle')
+					.attr('cx',.5*circlesvgwidth)
+					.attr('cy',.5*circlesvgwidth)
+					.attr('r',.0231839*window.innerHeight);
+
+		d3.select("#circle0")
+			.append('text')
+				.attr('x','50%')
+				.attr('y','65%')
+				.attr('text-anchor','middle')
+				.style('stroke-width','0')
+				.style('fill','#000')
+				.style('font-size',.02163833*window.innerHeight)
+				.text(getInitials(this.innerHTML));
 
 		d3.select("#circles").style('display','block');
 
@@ -350,27 +424,26 @@ function choosePlayer() {
 		checkbutton.setAttribute('data-action',"Shot Made");
 		xbutton.setAttribute('data-action',"Shot Missed");
 
-		shotwasattempted = 1;
+		shotwasattempted = true;
 
 		currentcircle += 1;
 	}
 
 	else if (pressure === "Scrimmage") {
-		if (currentevent === 0 && (abletopass + abletoshoot + abletodribble) === 0 && passwasattempted === 0) {
+		if (currentevent === 0 && !abletopass && !abletoshoot && !abletodribble && !passwasattempted) {
 			currentplayer = this.id;
-			abletoshoot = 1;
-			abletopass = 1;
-			abletodribble = 1;
+			abletoshoot = true;
+			abletopass = true;
+			abletodribble = true;
 		
 			hoopsvg.setAttribute('onmouseover','colorHoop()');
 
 			drawNextCircle(this.innerHTML, newevent["Location"][0]*offsetobj.width + leftoffset, newevent["Location"][1]*offsetobj.height + topoffset);
 
-			var currentplayerid = currentplayer.toLowerCase().replace(" ","");
 			document.getElementById(currentplayer).style.display = "none";
 		}
 
-		else if (passwasattempted === 1 && dribbleoccurred === 0) {
+		else if (passwasattempted && !dribbleoccurred) {
 			document.getElementById(currentplayer).style.display = "block";
 
 			player1 = this.id;
@@ -393,14 +466,14 @@ function choosePlayer() {
 					console.log("Error code: " + error.code);
 				});
 
-			abletopass = 1;
-			abletoshoot = 1;
-			abletodribble = 1;
+			abletopass = true;
+			abletoshoot = true;
+			abletodribble = true;
 
 			hoopsvg.setAttribute('onmouseover','colorHoop()');
 
-			passwasattempted = 0;
-			passoccurred = 1;
+			passwasattempted = false;
+			passoccurred = true;
 
 			actionbuttons.style.display = "block";
 			ooboppbutton.style.display = "none";
@@ -433,7 +506,7 @@ function chooseAction() {
 				d3.select("#circle0").remove();
 
 				newevent = {};
-				shotwasattempted = 0;
+				shotwasattempted = false;
 			})
 			.catch(error => {
 				console.error("Event not pushed to database");
@@ -443,7 +516,7 @@ function chooseAction() {
 	}
 
 	else if (pressure === "Scrimmage") {
-		if (shotwasattempted === 1 && this.dataset.action === "Shot Made") {
+		if (shotwasattempted && this.dataset.action === "Shot Made") {
 			newevent["Action"] = this.dataset.action;
 
 			let pushkey = database.ref().push().key;
@@ -470,7 +543,7 @@ function chooseAction() {
 					xbutton.style.display = "none";
 
 					newevent = {};
-					shotwasattempted = 0;
+					shotwasattempted = false;
 					currentevent = 0;
 					currentsequence += 1;
 
@@ -497,15 +570,15 @@ function chooseAction() {
 				});
 		}
 
-		else if (shotwasattempted === 1 && this.dataset.action === "Shot Missed") {
+		else if (shotwasattempted && this.dataset.action === "Shot Missed") {
 			newevent["Action"] = this.dataset.action;
 
 			notrebbutton.style.display = "block";
 			checkbutton.style.display = "none";
 			xbutton.style.display = "none";
 			document.getElementById(currentplayer).style.display = "block";
-			shotwasattempted = 0;
-			abletorebound = 1;
+			shotwasattempted = false;
+			abletorebound = true;
 		}
 
 		else if (this.dataset.action === "Pass Missed") {
@@ -514,7 +587,7 @@ function chooseAction() {
 			oobourbutton.style.display = "inline";
 			opponentbutton.style.display = "inline";
 
-			passoccurred = 0;
+			passoccurred = false;
 			currentevent = 0;
 			currentsequence += 1;
 
@@ -532,9 +605,9 @@ function chooseAction() {
 					console.log("Error code: " + error.code);
 				});
 
-			abletoshoot = 0;
-			abletodribble = 0;
-			abletopass = 0;
+			abletoshoot = false;
+			abletodribble = false;
+			abletopass = false;
 
 			hoopsvg.setAttribute('onmouseover','');
 		}
@@ -553,7 +626,7 @@ function chooseAction() {
 		
 					xbutton.style.display = "none";
 
-					dribbleoccurred = 0;
+					dribbleoccurred = false;
 					currentevent = 0;
 					currentsequence += 1;
 
@@ -571,9 +644,9 @@ function chooseAction() {
 							console.log("Error code: " + error.code);
 						});
 
-					abletoshoot = 0;
-					abletodribble = 0;
-					abletopass = 0;
+					abletoshoot = false;
+					abletodribble = false;
+					abletopass = false;
 
 					hoopsvg.setAttribute('onmouseover','');
 
@@ -601,16 +674,16 @@ function chooseAction() {
 }
 
 function inputDribble() {
-	var dt = new Date();
+	let dt = new Date();
 
 	hoopsvg.setAttribute('onmouseover','');
 
-	if (abletodribble === 1 && passoccurred === 0 && dribbleoccurred == 0) {
+	if (abletodribble && !passoccurred && !dribbleoccurred) {
 		newevent["Action"] = "Dribble";
 		newevent["Location"] = [newevent["Location"]];
 	}
 
-	else if (abletodribble === 1 && dribbleoccurred === 1 && passoccurred === 0) {
+	else if (abletodribble && !passoccurred && dribbleoccurred) {
 		let pushkey = database.ref().push().key;
 		let updates = {};
 		updates[pushkey] = newevent;
@@ -619,7 +692,7 @@ function inputDribble() {
 			.update(updates)
 			.then(() => {
 				console.log("Event pushed to database");
-				var lastlocation = newevent["Location"][newevent["Location"].length - 1];
+				let lastlocation = newevent["Location"][newevent["Location"].length - 1];
 
 				newevent = {};
 				newevent = {
@@ -638,8 +711,8 @@ function inputDribble() {
 			});
 	}
 
-	else if (abletodribble === 1 && dribbleoccurred === 0 && passoccurred === 1) {
-		passoccurred = 0;
+	else if (abletodribble && passoccurred && !dribbleoccurred) {
+		passoccurred = false;
 
 		newevent["Action"] = "Pass Made";
 		newevent2["Action"] = "Pass Received";
@@ -674,20 +747,22 @@ function inputDribble() {
 		};
 	}
 
-	d3.select("#dribbles").style('display','block')
-						.append('svg')
-						.style('display','block')
-						.attr('class','dribbleclass')
-						.attr('width',.808124*window.innerHeight)
-						.attr('height',.758714*window.innerHeight)
-						.attr('id','dribble' + currentdribble + 'svg');
+	d3.select("#dribbles")
+		.style('display','block')
+		.append('svg')
+			.style('display','block')
+			.attr('class','dribbleclass')
+			.attr('width',.808124*window.innerHeight)
+			.attr('height',.758714*window.innerHeight)
+			.attr('id','dribble' + currentdribble + 'svg');
 
-	d3.select("#dribble" + currentdribble + 'svg').append('line')
-							.attr('id', 'dribble' + currentdribble + 'line1')
-							.attr("x1", newevent["Location"][newevent["Location"].length - 1][0]*offsetobj.width)
-							.attr("y1", newevent["Location"][newevent["Location"].length - 1][1]*offsetobj.height)
-							.attr('x2', event.pageX - leftoffset)
-							.attr('y2', event.pageY - topoffset);
+	d3.select("#dribble" + currentdribble + 'svg')
+		.append('line')
+			.attr('id', 'dribble' + currentdribble + 'line1')
+			.attr("x1", newevent["Location"][newevent["Location"].length - 1][0]*offsetobj.width)
+			.attr("y1", newevent["Location"][newevent["Location"].length - 1][1]*offsetobj.height)
+			.attr('x2', event.pageX - leftoffset)
+			.attr('y2', event.pageY - topoffset);
 
 	currentline = 0;
 	locationtimer = 0;
@@ -696,18 +771,21 @@ function inputDribble() {
 		let courtloc = [parseFloat(((event.pageX - leftoffset)/offsetobj.width).toFixed(numdec)), parseFloat(((event.pageY - topoffset)/offsetobj.height).toFixed(numdec))];
 
 		if (currentline === 0) {
-			d3.select("#dribble" + currentdribble + "line1").attr('x2', event.pageX - leftoffset)
-								.attr('y2', event.pageY - topoffset);
+			d3.select("#dribble" + currentdribble + "line1")
+				.attr('x2', event.pageX - leftoffset)
+				.attr('y2', event.pageY - topoffset);
 		}
 
 		else if (currentline % 2 === 0) {
-			d3.select("#dribble" + currentdribble + 'line' + currentline + '').attr('x2', event.pageX - leftoffset)
-												.attr('y2', event.pageY - topoffset);
+			d3.select("#dribble" + currentdribble + 'line' + currentline + '')
+				.attr('x2', event.pageX - leftoffset)
+				.attr('y2', event.pageY - topoffset);
 		}
 
-		d3.select("#circle" + (currentcircle-1) + '').style('left',event.pageX - circleradius)
-													.style('top',event.pageY - circleradius)
-													.style("z-index",11);
+		d3.select("#circle" + (currentcircle-1) + '')
+			.style('left',event.pageX - circleradius)
+			.style('top',event.pageY - circleradius)
+			.style("z-index",11);
 
 		locationtimer += 1;		
 
@@ -716,14 +794,15 @@ function inputDribble() {
 			locationtimer = 0;
 			currentline += 1;
 			if (currentline % 2 === 0) {
-				d3.select("#dribble" + currentdribble + 'svg').append('line')
-										.attr('id', 'dribble' + currentdribble + 'line' + currentline + '')
-										.attr("x1", locationarray[locationarray.length - 1][0]*offsetobj.width)
-										.attr("y1", locationarray[locationarray.length - 1][1]*offsetobj.height)
-										.attr('x2', event.pageX - leftoffset)
-										.attr('y2', event.pageY - topoffset)
-										.attr("stroke-width", 2)
-										.attr("stroke", "blue");	
+				d3.select("#dribble" + currentdribble + 'svg')
+					.append('line')
+						.attr('id', 'dribble' + currentdribble + 'line' + currentline + '')
+						.attr("x1", locationarray[locationarray.length - 1][0]*offsetobj.width)
+						.attr("y1", locationarray[locationarray.length - 1][1]*offsetobj.height)
+						.attr('x2', event.pageX - leftoffset)
+						.attr('y2', event.pageY - topoffset)
+						.attr("stroke-width", 2)
+						.attr("stroke", "blue");
 			}
 		}
 	});
@@ -734,9 +813,10 @@ function stopDribble() {
 
 	locationarray.push(courtloc);
 
-	d3.select("#circle" + (currentcircle-1) + '').style('left',event.pageX - circleradius)
-												.style('top',event.pageY - circleradius)
-												.style("z-index",1);
+	d3.select("#circle" + (currentcircle-1) + '')
+		.style('left',event.pageX - circleradius)
+		.style('top',event.pageY - circleradius)
+		.style("z-index",1);
 
 	$(document).off("mousemove");
 
@@ -750,7 +830,6 @@ function stopDribble() {
 	checkbutton.style.display = "none";
 	xbutton.style.display = "block";
 	xbutton.setAttribute('data-action','Dribble Stolen');
-	//Not fixed value at 50
 	actionbuttons.style.left = locationarray[locationarray.length -1][0]*offsetobj.width - (50/647)*window.innerHeight + 'px';
 	actionbuttons.style.top = locationarray[locationarray.length -1][1]*offsetobj.width - (50/647)*window.innerHeight + 'px';
 
@@ -768,10 +847,10 @@ function stopDribble() {
 			console.log("Error code: " + error.code);
 		});
 
-	dribbleoccurred = 1;
-	abletodribble = 1;
-	abletopass = 1;
-	abletoshoot = 1;
+	dribbleoccurred = true;
+	abletodribble = true;
+	abletopass = true;
+	abletoshoot = true;
 
 	currentdribble += 1;
 
@@ -866,7 +945,7 @@ function notRebounded() {
 					console.log("Error code: " + error.code);
 				});
 
-			abletorebound = 0;
+			abletorebound = false;
 		})
 		.catch(error => {
 			console.error("Event not pushed to database");
@@ -876,22 +955,23 @@ function notRebounded() {
 }
 
 function chooseShot() {
-	var dt = new Date();
+	let dt = new Date();
 
-	if (abletoshoot === 1 && shotwasattempted === 0 && passoccurred === 0 && dribbleoccurred === 0) {
+	if (abletoshoot && !shotwasattempted && !passoccurred && !dribbleoccurred) {
 		drawShotArrow(newevent["Location"][0]*offsetobj.width,newevent["Location"][1]*offsetobj.height);
-		abletoshoot = 0;
-		abletopass = 0;
-		abletodribble = 0;
-		shotwasattempted = 1;
+		abletoshoot = false;
+		abletopass = false;
+		abletodribble = false;
+		shotwasattempted = true;
 
 		hoopsvg.setAttribute('onmouseover','');
 
-		d3.select("#circle" + (currentcircle - 1) + '').attr('onmousedown','')
-														.attr('onmouseup','');
+		d3.select("#circle" + (currentcircle - 1) + '')
+			.attr('onmousedown','')
+			.attr('onmouseup','');
 	}
 
-	else if (abletoshoot === 1 && shotwasattempted === 0 && passoccurred === 0 && dribbleoccurred === 1) {
+	else if (abletoshoot && !shotwasattempted && !passoccurred && dribbleoccurred) {
 		drawShotArrow(newevent["Location"][newevent["Location"].length - 1][0]*offsetobj.width,newevent["Location"][newevent["Location"].length - 1][1]*offsetobj.height);
 
 		let pushkey = database.ref().push().key;
@@ -903,19 +983,20 @@ function chooseShot() {
 			.then(() => {
 				console.log("Event pushed to database");
 		
-				abletoshoot = 0;
-				abletopass = 0;
-				abletodribble = 0;
-				shotwasattempted = 1;
+				abletoshoot = false;
+				abletopass = false;
+				abletodribble = false;
+				shotwasattempted = true;
 
 				hoopsvg.setAttribute('onmouseover','');
 
-				d3.select("#circle" + (currentcircle - 1) + '').attr('onmousedown','')
-																.attr('onmouseup','');
+				d3.select("#circle" + (currentcircle - 1) + '')
+					.attr('onmousedown','')
+					.attr('onmouseup','');
 
 				dribbleoccurred = 0;
 
-				var lastlocation = newevent["Location"][newevent["Location"].length - 1];
+				let lastlocation = newevent["Location"][newevent["Location"].length - 1];
 
 				newevent = {};
 				newevent = {
@@ -932,7 +1013,7 @@ function chooseShot() {
 			});
 	}
 
-	else if (abletoshoot === 1 && shotwasattempted === 0 && passoccurred === 1 && dribbleoccurred === 0) {
+	else if (abletoshoot && !shotwasattempted && passoccurred && dribbleoccurred) {
 		drawShotArrow(newevent2["Location"][0]*offsetobj.width, newevent2["Location"][1]*offsetobj.height)
 
 		newevent["Action"] = "Pass Made";
@@ -949,17 +1030,18 @@ function chooseShot() {
 			.then(() => {
 				console.log("Event pushed to database");
 	
-				abletoshoot = 0;
-				abletopass = 0;
-				abletodribble = 0;
-				shotwasattempted = 1;
+				abletoshoot = false;
+				abletopass = false;
+				abletodribble = false;
+				shotwasattempted = true;
 
 				hoopsvg.setAttribute('onmouseover','');
 
-				d3.select("#circle" + (currentcircle - 1) + '').attr('onmousedown','')
-																.attr('onmouseup','');
+				d3.select("#circle" + (currentcircle - 1) + '')
+					.attr('onmousedown','')
+					.attr('onmouseup','');
 
-				passoccurred = 0;	
+				passoccurred = false;	
 
 				currentplayer = player1;
 				player1 = null;
@@ -986,57 +1068,56 @@ function chooseShot() {
 
 function drawShotArrow(xloc,yloc) {
 	//all of this is relative to top left corner of court
-	var centerx = xloc;
-	var centery = yloc;
-    
-	var diffx = hoopx - centerx;
-	var diffy = hoopy - centery;
+	let diffx = hoopx - xloc;
+	let diffy = hoopy - yloc;
 
-	var dist = Math.sqrt(Math.pow(diffx,2) + Math.pow(diffy,2));
+	let dist = Math.sqrt(Math.pow(diffx,2) + Math.pow(diffy,2));
 
-	var unitvector = [(diffx/dist),(diffy/dist)];
-	var vectortoinitialpoint = [circleradius*unitvector[0],circleradius*unitvector[1]];
+	let unitvector = [(diffx/dist),(diffy/dist)];
+	let vectortoinitialpoint = [circleradius*unitvector[0],circleradius*unitvector[1]];
 
-	var x1 = centerx + vectortoinitialpoint[0];
-	var y1 = centery + vectortoinitialpoint[1];
+	let x1 = xloc + vectortoinitialpoint[0];
+	let y1 = yloc + vectortoinitialpoint[1];
 
-	var headmag = 15;
-	var head = [headmag*unitvector[0],headmag*unitvector[1]];
+	let head = [headmag*unitvector[0],headmag*unitvector[1]];
 
-	var head1vector = [Math.cos(Math.PI/6)*head[0] - Math.sin(Math.PI/6)*head[1],Math.cos(Math.PI/6)*head[1] + Math.sin(Math.PI/6)*head[0]];
-	var head2vector = [Math.cos(11*Math.PI/6)*head[0] - Math.sin(11*Math.PI/6)*head[1],Math.cos(11*Math.PI/6)*head[1] + Math.sin(11*Math.PI/6)*head[0]];
+	let head1vector = [Math.cos(Math.PI/6)*head[0] - Math.sin(Math.PI/6)*head[1],Math.cos(Math.PI/6)*head[1] + Math.sin(Math.PI/6)*head[0]];
+	let head2vector = [Math.cos(11*Math.PI/6)*head[0] - Math.sin(11*Math.PI/6)*head[1],Math.cos(11*Math.PI/6)*head[1] + Math.sin(11*Math.PI/6)*head[0]];
 
 
-	var head1x = hoopx-head1vector[0];
-	var head1y = hoopy-head1vector[1];
+	let head1x = hoopx-head1vector[0];
+	let head1y = hoopy-head1vector[1];
 
-	var head2x = hoopx-head2vector[0];
-	var head2y = hoopy-head2vector[1];
+	let head2x = hoopx-head2vector[0];
+	let head2y = hoopy-head2vector[1];
 
-	d3.select("#shots").style('display','block')
-						.append('line')
-						.attr('id','shot' + currentshot + 'mainline')
-						.attr('x1',centerx)
-						.attr('y1',centery)
-						.attr('x2',hoopx)
-						.attr('y2',hoopy);
+	d3.select("#shots")
+		.style('display','block')
+		.append('line')
+			.attr('id','shot' + currentshot + 'mainline')
+			.attr('x1',xloc)
+			.attr('y1',yloc)
+			.attr('x2',hoopx)
+			.attr('y2',hoopy);
 
-	d3.select("#shots").append('line')
-						.attr('id','shot' + currentshot + 'head1line')
-						.attr('x1',head1x)
-						.attr('y1',head1y)
-						.attr('x2',hoopx)
-						.attr('y2',hoopy);
+	d3.select("#shots")
+		.append('line')
+			.attr('id','shot' + currentshot + 'head1line')
+			.attr('x1',head1x)
+			.attr('y1',head1y)
+			.attr('x2',hoopx)
+			.attr('y2',hoopy);
 
-	d3.select("#shots").append('line')
-						.attr('id','shot' + currentshot + 'head2line')
-						.attr('x1',head2x)
-						.attr('y1',head2y)
-						.attr('x2',hoopx)
-						.attr('y2',hoopy);
+	d3.select("#shots")
+		.append('line')
+			.attr('id','shot' + currentshot + 'head2line')
+			.attr('x1',head2x)
+			.attr('y1',head2y)
+			.attr('x2',hoopx)
+			.attr('y2',hoopy);
 
-	var posleft = hoopx + .5*(centerx - hoopx);
-	var postop = hoopy + .5*(centery - hoopy);
+	let posleft = hoopx + .5*(xloc - hoopx);
+	let postop = hoopy + .5*(yloc - hoopy);
 
 	actionbuttons.style.top = postop + 'px';
 	actionbuttons.style.left = posleft + 'px';
@@ -1052,114 +1133,114 @@ function drawShotArrow(xloc,yloc) {
 }
 
 function drawReboundArrow(xloc,yloc) {
-	var centerx = xloc;
-	var centery = yloc;
-    
-	var diffx = centerx - hoopx;
-	var diffy = centery - hoopy;
+	//Relative to to court
+	let diffx = xloc - hoopx;
+	let diffy = yloc - hoopy;
 
-	var dist = Math.sqrt(Math.pow(diffx,2) + Math.pow(diffy,2));
+	let dist = Math.sqrt(Math.pow(diffx,2) + Math.pow(diffy,2));
 
-	var unitvector = [(diffx/dist),(diffy/dist)];
-	var vectortoinitialpoint = [circleradius*unitvector[0],circleradius*unitvector[1]];
+	let unitvector = [(diffx/dist),(diffy/dist)];
+	let vectortoinitialpoint = [circleradius*unitvector[0],circleradius*unitvector[1]];
 
-	var x2 = centerx - vectortoinitialpoint[0];
-	var y2 = centery - vectortoinitialpoint[1];
+	let x2 = xloc - vectortoinitialpoint[0];
+	let y2 = yloc - vectortoinitialpoint[1];
 
+	let head = [headmag*unitvector[0],headmag*unitvector[1]];
 
-	var headmag = 15;
-	var head = [headmag*unitvector[0],headmag*unitvector[1]];
+	let head1vector = [Math.cos(Math.PI/6)*head[0] - Math.sin(Math.PI/6)*head[1],Math.cos(Math.PI/6)*head[1] + Math.sin(Math.PI/6)*head[0]];
+	let head2vector = [Math.cos(11*Math.PI/6)*head[0] - Math.sin(11*Math.PI/6)*head[1],Math.cos(11*Math.PI/6)*head[1] + Math.sin(11*Math.PI/6)*head[0]];
 
-	var head1vector = [Math.cos(Math.PI/6)*head[0] - Math.sin(Math.PI/6)*head[1],Math.cos(Math.PI/6)*head[1] + Math.sin(Math.PI/6)*head[0]];
-	var head2vector = [Math.cos(11*Math.PI/6)*head[0] - Math.sin(11*Math.PI/6)*head[1],Math.cos(11*Math.PI/6)*head[1] + Math.sin(11*Math.PI/6)*head[0]];
+	let head1x = x2-head1vector[0];
+	let head1y = y2-head1vector[1];
 
+	let head2x = x2-head2vector[0];
+	let head2y = y2-head2vector[1];
 
-	var head1x = x2-head1vector[0];
-	var head1y = y2-head1vector[1];
+	d3.select("#rebounds")
+		.style('display','block')
+		.append('line')
+			.attr('id','rebound' + currentrebound + 'mainline')
+			.attr('x1',hoopx)
+			.attr('y1',hoopy)
+			.attr('x2',x2)
+			.attr('y2',y2);
 
-	var head2x = x2-head2vector[0];
-	var head2y = y2-head2vector[1];
+	d3.select("#rebounds")
+		.append('line')
+			.attr('id','rebound' + currentrebound + 'head1line')
+			.attr('x1',head1x)
+			.attr('y1',head1y)
+			.attr('x2',x2)
+			.attr('y2',y2);
 
-	d3.select("#rebounds").style('display','block')
-						.append('line')
-						.attr('id','rebound' + currentrebound + 'mainline')
-						.attr('x1',hoopx)
-						.attr('y1',hoopy)
-						.attr('x2',x2)
-						.attr('y2',y2);
+	d3.select("#rebounds")
+		.append('line')
+			.attr('id','rebound' + currentrebound + 'head2line')
+			.attr('x1',head2x)
+			.attr('y1',head2y)
+			.attr('x2',x2)
+			.attr('y2',y2);
 
-	d3.select("#rebounds").append('line')
-						.attr('id','rebound' + currentrebound + 'head1line')
-						.attr('x1',head1x)
-						.attr('y1',head1y)
-						.attr('x2',x2)
-						.attr('y2',y2);
-
-	d3.select("#rebounds").append('line')
-						.attr('id','rebound' + currentrebound + 'head2line')
-						.attr('x1',head2x)
-						.attr('y1',head2y)
-						.attr('x2',x2)
-						.attr('y2',y2);
-
-	var posleft = hoopx + .5*(centerx - hoopx);
-	var postop = hoopy + .5*(centery - hoopy);
+	let posleft = hoopx + .5*(xloc - hoopx);
+	let postop = hoopy + .5*(yloc - hoopy);
 
 	currentrebound += 1;
 }
 
 function drawPassArrow(xi,yi,xf,yf) {	
-	var diffx = xf - xi;
-	var diffy = yf - yi;
+	let diffx = xf - xi;
+	let diffy = yf - yi;
 
-	var dist = Math.sqrt(Math.pow(diffx,2) + Math.pow(diffy,2));
+	let dist = Math.sqrt(Math.pow(diffx,2) + Math.pow(diffy,2));
 
-	var unitvector = [(diffx/dist),(diffy/dist)];
-	var vectortoinitialpoint = [circleradius*unitvector[0],circleradius*unitvector[1]];
+	let unitvector = [(diffx/dist),(diffy/dist)];
+	let vectortoinitialpoint = [circleradius*unitvector[0],circleradius*unitvector[1]];
 
-	var x1 = xi + vectortoinitialpoint[0];
-	var y1 = yi + vectortoinitialpoint[1];
+	let x1 = xi + vectortoinitialpoint[0];
+	let y1 = yi + vectortoinitialpoint[1];
 
-	var x2 = xf - vectortoinitialpoint[0];
-	var y2 = yf - vectortoinitialpoint[1];
+	let x2 = xf - vectortoinitialpoint[0];
+	let y2 = yf - vectortoinitialpoint[1];
 
-	var headmag = 15;
-	var head = [headmag*unitvector[0],headmag*unitvector[1]];
+	let head = [headmag*unitvector[0],headmag*unitvector[1]];
 
-	var head1vector = [Math.cos(Math.PI/6)*head[0] - Math.sin(Math.PI/6)*head[1],Math.cos(Math.PI/6)*head[1] + Math.sin(Math.PI/6)*head[0]];
-	var head2vector = [Math.cos(11*Math.PI/6)*head[0] - Math.sin(11*Math.PI/6)*head[1],Math.cos(11*Math.PI/6)*head[1] + Math.sin(11*Math.PI/6)*head[0]];
+	let head1vector = [Math.cos(Math.PI/6)*head[0] - Math.sin(Math.PI/6)*head[1],Math.cos(Math.PI/6)*head[1] + Math.sin(Math.PI/6)*head[0]];
+	let head2vector = [Math.cos(11*Math.PI/6)*head[0] - Math.sin(11*Math.PI/6)*head[1],Math.cos(11*Math.PI/6)*head[1] + Math.sin(11*Math.PI/6)*head[0]];
 
 
-	var head1x = x2-head1vector[0];
-	var head1y = y2-head1vector[1];
+	let head1x = x2-head1vector[0];
+	let head1y = y2-head1vector[1];
 
-	var head2x = x2-head2vector[0];
-	var head2y = y2-head2vector[1];
+	let head2x = x2-head2vector[0];
+	let head2y = y2-head2vector[1];
 
-	d3.select("#passes").style('display','block')
-						.append('line')
-						.attr('id','pass' + currentpass + 'mainline')
-						.attr('x1',x1)
-						.attr('y1',y1)
-						.attr('x2',x2)
-						.attr('y2',y2);
+	d3.select("#passes")
+		.style('display','block')
+		.append('line')
+			.attr('id','pass' + currentpass + 'mainline')
+			.attr('x1',x1)
+			.attr('y1',y1)
+			.attr('x2',x2)
+			.attr('y2',y2);
 
-	d3.select("#passes").append('line')
-						.attr('id','pass' + currentpass + 'head1line')
-						.attr('x1',head1x)
-						.attr('y1',head1y)
-						.attr('x2',x2)
-						.attr('y2',y2);
+	d3.select("#passes")
+		.append('line')
+			.attr('id','pass' + currentpass + 'head1line')
+			.attr('x1',head1x)
+			.attr('y1',head1y)
+			.attr('x2',x2)
+			.attr('y2',y2);
 
-	d3.select("#passes").append('line')
-						.attr('id','pass' + currentpass + 'head2line')
-						.attr('x1',head2x)
-						.attr('y1',head2y)
-						.attr('x2',x2)
-						.attr('y2',y2);
+	d3.select("#passes")
+		.append('line')
+			.attr('id','pass' + currentpass + 'head2line')
+			.attr('x1',head2x)
+			.attr('y1',head2y)
+			.attr('x2',x2)
+			.attr('y2',y2);
 
-	var posleft = x2 + .5*(x1 - x2);
-	var postop = y2 + .5*(y1 - y2);
+	let posleft = x2 + .5*(x1 - x2);
+	let postop = y2 + .5*(y1 - y2);
 	actionbuttons.style.top = postop + 'px';
 	actionbuttons.style.left = posleft + 'px';
 
@@ -1167,7 +1248,7 @@ function drawPassArrow(xi,yi,xf,yf) {
 }
 
 function getInitials(name) {
-	var currentinitials;
+	let currentinitials;
 
 	if (name.includes(" ")) {
 		var x = name.split(" ");
@@ -1184,118 +1265,45 @@ function getInitials(name) {
 }
 
 function drawNextCircle(player,x,y) {
-	d3.select("#circles").append('svg')
-						.attr('id','circle' + currentcircle + '')
-						.attr('width',circlesvgwidth)
-						.attr('height',circlesvgwidth)
-						.attr('class','circleforplayers')
-						.style('left',x - circleradius)
-						.style('top',y - circleradius)
-						.style('display','block')
-						.append('circle')
-						.attr('cx',.5*circlesvgwidth)
-						.attr('cy',.5*circlesvgwidth)
-						.attr('r',.0231839*window.innerHeight);
-	d3.select("#circle" + currentcircle + '').append('text')
-						.attr('x','50%')
-						.attr('y','65%')
-						.attr('text-anchor','middle')
-						.style('stroke-width','0')
-						.style('fill','#000')
-						.style('font-size',.02163833*window.innerHeight)
-						.text(getInitials(player));
+	d3.select("#circles")
+		.append('svg')
+			.attr('id','circle' + currentcircle + '')
+			.attr('width',circlesvgwidth)
+			.attr('height',circlesvgwidth)
+			.attr('class','circleforplayers')
+			.style('left',x - circleradius)
+			.style('top',y - circleradius)
+			.style('display','block')
+			.append('circle')
+				.attr('cx',.5*circlesvgwidth)
+				.attr('cy',.5*circlesvgwidth)
+				.attr('r',.0231839*window.innerHeight);
+
+	d3.select("#circle" + currentcircle + '')
+		.append('text')
+			.attr('x','50%')
+			.attr('y','65%')
+			.attr('text-anchor','middle')
+			.style('stroke-width','0')
+			.style('fill','#000')
+			.style('font-size',.02163833*window.innerHeight)
+			.text(getInitials(player));
 
 	d3.select("#circles").style('display','block');
 
-	d3.select("#circle" + currentcircle + '').attr('onmousedown','inputDribble()')
-											.attr('onmouseup','stopDribble()');
+	d3.select("#circle" + currentcircle + '')
+		.attr('onmousedown','inputDribble()')
+		.attr('onmouseup','stopDribble()');
 
-	d3.select("#circle" + (currentcircle - 1) + '').attr('onmousedown','')
-													.attr('onmouseup','');
+	d3.select("#circle" + (currentcircle - 1) + '')
+		.attr('onmousedown','')
+		.attr('onmouseup','');
 
 	currentcircle += 1;
 }
-
 ///////////////////////////////////////////////////////
 
-var hoopx = .4*window.innerHeight;
-var hoopy = .0866*window.innerHeight;
 
-//Scaling Variables
-var circleradius = .0247*window.innerHeight;
-
-
-jss.set('.circleforplayers', {
-	'width': '' + .0495*window.innerHeight + 'px',
-	'height': '' + .0495*window.innerHeight + 'px',
-});
-
-var hoop = document.getElementById('hoop');
-
-//Shot Lines
-d3.select("#shots").attr('width',.808124*window.innerHeight)
-					.attr('height',.758714*window.innerHeight);
-
-//Pass Lines
-d3.select("#passes").attr('width',.808124*window.innerHeight)
-					.attr('height',.758714*window.innerHeight);
-
-//Dribble Lines
-d3.select("#dribbles").attr('width',.808124*window.innerHeight)
-					.attr('height',.758714*window.innerHeight);
-
-//Rebound Lines
-d3.select("#rebounds").attr('width',.808124*window.innerHeight)
-					.attr('height',.758714*window.innerHeight);
-
-var circlesvgwidth = .049459*window.innerHeight
-
-//Buttons and Divs
-var checkbutton = document.getElementById('checkbutton');
-var xbutton = document.getElementById('xbutton');
-var notrebbutton = document.getElementById('notreb');
-var opponentbutton = document.getElementById('opponent');
-var oobourbutton = document.getElementById('oobour');
-var ooboppbutton = document.getElementById('oobopp')
-var pagecontentdiv = document.getElementById('pagecontent');
-var actionbuttons = document.getElementById('actionbuttons');
-
-checkbutton.addEventListener("click", chooseAction);
-xbutton.addEventListener("click", chooseAction);
-notrebbutton.addEventListener("click", notRebounded);
-opponentbutton.addEventListener("click", lossTo);
-oobourbutton.addEventListener("click", lossTo);
-ooboppbutton.addEventListener("click", lossTo);
-
-//Basic Variables
-var newevent = {};
-var newevent2 = {};
-
-var currentevent;
-var currentplayer;
-var player1;
-
-var locationtimer = 0;
-var locationarray = [];
-
-//State Variables
-var abletopass = 0;
-var abletoshoot = 0;
-var abletodribble = 0;
-var abletorebound = 0;
-
-var passwasattempted = 0;
-var shotwasattempted = 0;
-var reboundwasattempted = 0;
-
-var passoccurred = 0;
-var dribbleoccurred = 0;
-
-var currentcircle = 0;
-var currentpass = 0;
-var currentdribble = 0;
-var currentshot = 0;
-var currentrebound = 0;
 
 // function undoSequence() {
 // 	if (pressure === "Scrimmage") {
