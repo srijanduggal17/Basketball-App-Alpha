@@ -3,9 +3,9 @@ document.getElementById("signUp").addEventListener("click",signUp);
 document.getElementById("signIn").addEventListener("click",signIn);
 
 //Declare variables for inputs
-var email;
-var pass;
-var fullname;
+var emailin;
+var passin;
+var fullnamein;
 
 //Declare asterisk variables
 var emailaster = document.getElementById("emailaster");
@@ -17,38 +17,15 @@ var pagestatus = true;
 
 function signUp() {
 	//Pull input data from fields
-	email = document.getElementById('email').value;
-	pass = document.getElementById('password').value;
-	fullname = document.getElementById('name').value;
+	emailin = document.getElementById('email').value;
+	passin = document.getElementById('password').value;
+	fullnamein = document.getElementById('name').value;
 
-	if (email === "") {
-		emailaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		emailaster.style.display = "none";
-	}
-
-	if (pass === "") {
-		passwordaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		passwordaster.style.display = "none";
-	}
-
-	if (fullname === "") {
-		nameaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		nameaster.style.display = "none";
-	}
-
+	verifySignUpInputs(emailin, passin, fullnamein);
 
 	//Run the following if email, password, and name were typed in
 	if(pagestatus) {
-		firebase.auth().createUserWithEmailAndPassword(email, pass).then(function() {
+		firebase.auth().createUserWithEmailAndPassword(emailin, passin).then(function() {
 			//This function runs if the user is successfully created
 			console.log("Account Created");
 
@@ -59,11 +36,11 @@ function signUp() {
 
 					let userinfo = {
 						email: user.email,
-						name: capitalizeName(fullname)
+						name: capitalizeName(fullnamein)
 					};
 
 					user.updateProfile({
-						displayName: capitalizeName(fullname)
+						displayName: capitalizeName(fullnamein)
 					}).then(function(update){
 						// Update successful
 						console.log("Name stored in profile");
@@ -112,28 +89,14 @@ function signUp() {
 
 function signIn() {
 	//Pull input data from fields
-	email = document.getElementById('email').value;
-	pass = document.getElementById('password').value;
+	emailin = document.getElementById('email').value;
+	passin = document.getElementById('password').value;
 
-	if (email === "") {
-		emailaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		emailaster.style.display = "none";
-	}
-
-	if (pass === "") {
-		passwordaster.style.display = "inline";
-		pagestatus = false;
-	}
-	else {
-		passwordaster.style.display = "none";
-	}
+	verifySignInInputs(emailin, passin);
 
 	//Run the following if email and password were typed in
 	if(pagestatus) {
-		firebase.auth().signInWithEmailAndPassword(email, pass).then(function() {
+		firebase.auth().signInWithEmailAndPassword(emailin, passin).then(function() {
 			//This function runs if the user is signed in
 			
 			firebase.auth().onAuthStateChanged(function(user) {
@@ -225,5 +188,49 @@ function signIn() {
 			console.log("Error code: " + error.code);
 			alert(error.message);
 		});
+	}
+}
+
+function verifySignUpInputs(email, pass, fullname) {
+	if (email === "") {
+		emailaster.style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		emailaster.style.display = "none";
+	}
+
+	if (pass === "") {
+		passwordaster.style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		passwordaster.style.display = "none";
+	}
+
+	if (fullname === "") {
+		nameaster.style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		nameaster.style.display = "none";
+	}
+}
+
+function verifySignInInputs(email, pass) {
+	if (email === "") {
+		emailaster.style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		emailaster.style.display = "none";
+	}
+
+	if (pass === "") {
+		passwordaster.style.display = "inline";
+		pagestatus = false;
+	}
+	else {
+		passwordaster.style.display = "none";
 	}
 }

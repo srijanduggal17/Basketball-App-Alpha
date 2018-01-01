@@ -1,20 +1,20 @@
-//Makes database reference
 var currentUser;
-var teamsdiv = document.getElementById("teamsdiv");
 var currentorgobj = database.ref('/organizationslist/' + localStorage.currentorganization);
 
+var teamsdiv = document.getElementById("teamsdiv");
 var deletebutton = document.getElementById("deletebutton");
-deletebutton.addEventListener("click", deleteTeams);
 var donebutton = document.getElementById("donebutton");
-donebutton.addEventListener("click", done);
-var candelete = false;
-document.getElementById("createteam").addEventListener("click", createTeam);
 var newteambutton = document.getElementById("newteambutton");
-newteambutton.addEventListener("click", newTeam);
 var myorgsbutton = document.getElementById("myorgsbutton");
+
+donebutton.addEventListener("click", done);
+deletebutton.addEventListener("click", deleteTeams);
 myorgsbutton.addEventListener("click", myOrgs);
+newteambutton.addEventListener("click", newTeam);
+document.getElementById("createteam").addEventListener("click", createTeam);
 
 var permdelete;
+var candelete = false;
 
 //Checks if user is signed in
 firebase.auth().onAuthStateChanged(function(user) {

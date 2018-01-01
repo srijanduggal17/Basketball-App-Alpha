@@ -14,43 +14,8 @@ firebase.auth().onAuthStateChanged(function(user) {
 		database.ref('/teamslist/' + localStorage.currentteam + '/players/').once("value", function(playerslist) {
 			//What if there are no players
 			//Show mesage and link to add players
+			makePlayerRows(playerslist.val());
 
-			for (const player in playerslist.val()) {
-				let newrow = statustable.insertRow();
-				newrow.id = player;
-
-				let newname = newrow.insertCell();
-				newname.innerHTML = playerslist.val()[player]["Name"];
-
-				let newstatussection = newrow.insertCell();
-
-				let injuredbutton = document.createElement('button');
-				injuredbutton.innerHTML = "Injured";
-				injuredbutton.addEventListener("click", selectStatus);
-				newstatussection.appendChild(injuredbutton);
-
-				let absentbutton = document.createElement('button');
-				absentbutton.innerHTML = "Absent";
-				absentbutton.addEventListener("click", selectStatus);
-				newstatussection.appendChild(absentbutton);
-
-				let practicingbutton = document.createElement('button');
-				practicingbutton.innerHTML = "Practicing";
-
-				if (eventtype === "games") {
-					let benchbutton = document.createElement('button');
-					benchbutton.innerHTML = "Bench";
-					benchbutton.addEventListener("click", selectStatus);
-					newstatussection.appendChild(benchbutton);
-
-					practicingbutton.innerHTML = "Playing";					
-				}
-
-				practicingbutton.addEventListener("click", selectStatus);
-				newstatussection.appendChild(practicingbutton);
-
-				statustable.appendChild(newrow);
-			}
 		}, function (error) {
 			console.error("Player list not pulled from database");
 			console.log(error.message);
@@ -63,6 +28,45 @@ firebase.auth().onAuthStateChanged(function(user) {
 		window.location.href = "../HTML/sign_in_up.html";
 	}
 });
+
+function makePlayerRows(list) {
+	for (const player in list) {
+		let newrow = statustable.insertRow();
+		newrow.id = player;
+
+		let newname = newrow.insertCell();
+		newname.innerHTML = list[player]["Name"];
+
+		let newstatussection = newrow.insertCell();
+
+		let injuredbutton = document.createElement('button');
+		injuredbutton.innerHTML = "Injured";
+		injuredbutton.addEventListener("click", selectStatus);
+		newstatussection.appendChild(injuredbutton);
+
+		let absentbutton = document.createElement('button');
+		absentbutton.innerHTML = "Absent";
+		absentbutton.addEventListener("click", selectStatus);
+		newstatussection.appendChild(absentbutton);
+
+		let practicingbutton = document.createElement('button');
+		practicingbutton.innerHTML = "Practicing";
+
+		if (eventtype === "games") {
+			let benchbutton = document.createElement('button');
+			benchbutton.innerHTML = "Bench";
+			benchbutton.addEventListener("click", selectStatus);
+			newstatussection.appendChild(benchbutton);
+
+			practicingbutton.innerHTML = "Playing";					
+		}
+
+		practicingbutton.addEventListener("click", selectStatus);
+		newstatussection.appendChild(practicingbutton);
+
+		statustable.appendChild(newrow);
+	}
+}
 
 function selectStatus() {
 	this.parentNode.parentNode.setAttribute("data-status", this.innerHTML);

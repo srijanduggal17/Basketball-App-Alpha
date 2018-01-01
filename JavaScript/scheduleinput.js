@@ -15,6 +15,8 @@ var teamkey = localStorage.currentteam;
 var savestatus = true;
 var pagestatus = true;
 var eventstatus = true;
+var timestatus = true;
+var editedtimestatus = true;
 
 //Checks if user is signed in
 firebase.auth().onAuthStateChanged(function(user) {
@@ -101,14 +103,136 @@ function selectLoc() {
 }
 
 function makeEvent() {
-	let eventdate = document.getElementById("neweventdate").value;
-	let eventstarttime = document.getElementById("neweventtimestart").value;
-	let eventendtime = document.getElementById("neweventtimeend").value;
-	let eventlocation = document.getElementById("neweventlocation").value;
-	let eventopponent = document.getElementById("newopponent").value;
+	let eventdatein = document.getElementById("neweventdate").value;
+	let eventstarttimein = document.getElementById("neweventtimestart").value;
+	let eventendtimein = document.getElementById("neweventtimeend").value;
+	let eventlocationin = document.getElementById("neweventlocation").value;
+	let eventopponentin = document.getElementById("newopponent").value;
 
-	let timestatus = true;
+	verifyMakeEvent(eventstarttimein, eventendtimein, eventdatein, eventlocationin, eventopponentin);
 
+	if (eventstatus) {
+		let newobj = {
+			"Event" : eventname,
+			"Date" : eventdatein,
+			"Start Time" : eventstarttimein,
+			"End Time" : eventendtimein,
+			"Location" : capitalizeName(eventlocationin)
+		}
+		if (eventname === "Game") {
+			if (homeaway === "Home") {
+				newobj.Homeaway = "Home";
+			}
+			else {
+				newobj.Homeaway = "Away"
+			}
+			newobj.Opponent = capitalizeName(eventopponentin);
+		}
+
+		let newrow = sortNewEvent(eventdatein, eventstarttimein);
+
+		schedule.push(newobj);
+
+		addScheduleRow(newrow, eventdatein, eventstarttimein, eventendtimein, eventlocationin, eventopponentin);
+
+		document.getElementById("neweventdate").value="";
+		document.getElementById("neweventtimestart").value="";
+		document.getElementById("neweventtimeend").value="";
+		document.getElementById("neweventlocation").value="";
+		eventname = null;
+		document.getElementById("newopponent").value = "";
+		document.getElementById("selectgame").style.background = "none";
+		document.getElementById("selectpractice").style.background = "none";
+		homeaway = null;
+		document.getElementById("selecthome").style.background = "none";
+		document.getElementById("selectaway").style.background = "none";
+		document.getElementById("opponentdiv").style.display = "none";
+		document.getElementById("homeawaydiv").style.display = "none";
+	}
+}
+
+function sortNewEvent(eventdate, eventstarttime) {
+	let splitdate = eventdate.split("-");
+	let splitstarttime = eventstarttime.split(":");
+	let newinput = new Date(splitdate[0], parseInt(splitdate[1]) - 1, splitdate[2], splitstarttime[0],splitstarttime[1]);
+	let newtime = newinput.getTime();
+	
+	let row;
+
+	if (schedule.length == 0) {
+		row = eventtable.insertRow(eventtable.rows.length-1);
+	}
+	else {
+		for (let i = 0; i < schedule.length; i++) {
+			let olddate = schedule[i]["Date"];
+			let scheduledate = olddate.split("-");
+			let oldstarttime = schedule[i]["Start Time"];
+			let scheduletime = oldstarttime.split(":");
+			let oldinput = new Date(scheduledate[0], parseInt(scheduledate[1]) - 1, scheduledate[2], scheduletime[0],scheduletime[1]);
+			let oldtime = oldinput.getTime();
+			if (oldtime > newtime) {
+				row = eventtable.insertRow(i+1);
+				break;
+			}
+			else if (i == (schedule.length-1)) {
+				row = eventtable.insertRow(eventtable.rows.length - 1);
+			}
+		}
+	}
+	return row;
+}
+
+function addScheduleRow(row, eventdate, eventstarttime, eventendtime, eventlocation, eventopponent) {
+	let newnamesection = row.insertCell();
+	let newdatesection = row.insertCell();
+	let newstarttimesection = row.insertCell();
+	let newendtimesection = row.insertCell();
+	let newlocationsection = row.insertCell();
+	let newopponentsection = row.insertCell();
+	let neweditcell = row.insertCell();
+	let newdeletecell = row.insertCell();
+
+	let newname = document.createElement('p');
+	newname.innerHTML = eventname;
+	let newdate = document.createElement('p');
+	newdate.innerHTML = eventdate;
+	let newstarttime = document.createElement('p');
+	newstarttime.innerHTML = eventstarttime;
+	let newendtime = document.createElement('p');
+	newendtime.innerHTML = eventendtime;
+	let newlocation = document.createElement('p');
+	newlocation.innerHTML = capitalizeName(eventlocation);
+	let newopponent = document.createElement('p');
+
+	if (homeaway === "Home") {
+		newopponent.innerHTML = "vs " + capitalizeName(eventopponent);
+	}
+	else if (homeaway === "Away") {
+		newopponent.innerHTML = "@" + capitalizeName(eventopponent);
+	}
+	else {
+		newopponent.innerHTML = capitalizeName(eventopponent);
+	}
+
+	newnamesection.appendChild(newname);
+	newdatesection.appendChild(newdate);
+	newstarttimesection.appendChild(newstarttime);
+	newendtimesection.appendChild(newendtime);
+	newlocationsection.appendChild(newlocation);
+	newopponentsection.appendChild(newopponent);
+	
+	let neweditbutton = document.createElement('button');
+	neweditbutton.addEventListener("click",editEvent);
+	neweditbutton.innerHTML = "Edit";
+	neweditcell.appendChild(neweditbutton);
+
+	let newdeletebutton = document.createElement('button');
+	newdeletebutton.addEventListener("click",deleteEvent); 
+	newdeletebutton.innerHTML = "Delete";
+	newdeletecell.appendChild(newdeletebutton);
+}
+
+function verifyMakeEvent(eventstarttime, eventendtime, eventdate, eventlocation, eventopponent) {
 	if (eventstarttime === "") {
 		document.getElementById('starttimeaster').style.display = "inline";
 		eventstatus = false;
@@ -168,115 +292,6 @@ function makeEvent() {
 	}
 	else {
 		document.getElementById('opponentaster').style.display = "none";
-	}
-
-	if (eventstatus) {
-		let newobj = {
-			"Event" : eventname,
-			"Date" : eventdate,
-			"Start Time" : eventstarttime,
-			"End Time" : eventendtime,
-			"Location" : capitalizeName(eventlocation)
-		}
-		if (eventname === "Game") {
-			if (homeaway === "Home") {
-				newobj.Homeaway = "Home";
-			}
-			else {
-				newobj.Homeaway = "Away"
-			}
-			newobj.Opponent = capitalizeName(eventopponent);
-		}
-
-		let splitdate = eventdate.split("-");
-		let splitstarttime = eventstarttime.split(":");
-		let newinput = new Date(splitdate[0], parseInt(splitdate[1]) - 1, splitdate[2], splitstarttime[0],splitstarttime[1]);
-		let newtime = newinput.getTime();
-
-		if (schedule.length == 0) {
-			var newrow = eventtable.insertRow(eventtable.rows.length-1);
-		}
-		else {
-			for (let i = 0; i < schedule.length; i++) {
-				let olddate = schedule[i]["Date"];
-			 	let scheduledate = olddate.split("-");
-			 	let oldstarttime = schedule[i]["Start Time"];
-			 	let scheduletime = oldstarttime.split(":");
-			 	let oldinput = new Date(scheduledate[0], parseInt(scheduledate[1]) - 1, scheduledate[2], scheduletime[0],scheduletime[1]);
-			 	let oldtime = oldinput.getTime();
-			 	if (oldtime > newtime) {
-			 		var newrow = eventtable.insertRow(i+1);
-			 		break;
-			 	}
-			 	else if (i == (schedule.length-1)) {
-			 		var newrow = eventtable.insertRow(eventtable.rows.length - 1);
-			 	}
-			}
-		}
-
-		let newnamesection = newrow.insertCell();
-		let newdatesection = newrow.insertCell();
-		let newstarttimesection = newrow.insertCell();
-		let newendtimesection = newrow.insertCell();
-		let newlocationsection = newrow.insertCell();
-		let newopponentsection = newrow.insertCell();
-		let neweditcell = newrow.insertCell();
-		let newdeletecell = newrow.insertCell();
-
-		let newname = document.createElement('p');
-		newname.innerHTML = eventname;
-		let newdate = document.createElement('p');
-		newdate.innerHTML = eventdate;
-		let newstarttime = document.createElement('p');
-		newstarttime.innerHTML = eventstarttime;
-		let newendtime = document.createElement('p');
-		newendtime.innerHTML = eventendtime;
-		let newlocation = document.createElement('p');
-		newlocation.innerHTML = capitalizeName(eventlocation);
-		let newopponent = document.createElement('p');
-
-		if (homeaway === "Home") {
-			newopponent.innerHTML = "vs " + capitalizeName(eventopponent);
-		}
-		else if (homeaway === "Away") {
-			newopponent.innerHTML = "@" + capitalizeName(eventopponent);
-		}
-		else {
-			newopponent.innerHTML = capitalizeName(eventopponent);
-		}
-
-		schedule.push(newobj);
-
-		newnamesection.appendChild(newname);
-		newdatesection.appendChild(newdate);
-		newstarttimesection.appendChild(newstarttime);
-		newendtimesection.appendChild(newendtime);
-		newlocationsection.appendChild(newlocation);
-		newopponentsection.appendChild(newopponent);
-		
-		let neweditbutton = document.createElement('button');
-		neweditbutton.addEventListener("click",editEvent);
-		neweditbutton.innerHTML = "Edit";
-		neweditcell.appendChild(neweditbutton);
-
-		let newdeletebutton = document.createElement('button');
-		newdeletebutton.addEventListener("click",deleteEvent); 
-		newdeletebutton.innerHTML = "Delete";
-		newdeletecell.appendChild(newdeletebutton);
-
-		document.getElementById("neweventdate").value="";
-		document.getElementById("neweventtimestart").value="";
-		document.getElementById("neweventtimeend").value="";
-		document.getElementById("neweventlocation").value="";
-		eventname = null;
-		document.getElementById("newopponent").value = "";
-		document.getElementById("selectgame").style.background = "none";
-		document.getElementById("selectpractice").style.background = "none";
-		homeaway = null;
-		document.getElementById("selecthome").style.background = "none";
-		document.getElementById("selectaway").style.background = "none";
-		document.getElementById("opponentdiv").style.display = "none";
-		document.getElementById("homeawaydiv").style.display = "none";
 	}
 }
 
@@ -391,17 +406,7 @@ function editSelectLoc() {
 	}
 }
 
-function saveEventChanges() {
-	eventeditaster.style.display = "none";
-
-	let editedeventdate = editeventdate.value;
-	let editedeventstarttime = editeventtimestart.value;
-	let editedeventendtime = editeventtimeend.value;
-	let editedeventlocation = editeventlocation.value;
-	let editedeventopponent = editeventopponent.value;
-
-	let editedtimestatus = true;
-
+function verifySaveEvent(editedeventstarttime, editedeventendtime, editedeventdate, editedeventlocation, editedeventopponent) {
 	if (editedeventstarttime === "") {
 		editstarttimeaster.style.display = "inline";
 		savestatus = false;
@@ -462,6 +467,18 @@ function saveEventChanges() {
 	else {
 		editopponentaster.style.display = "none";
 	}
+}
+
+function saveEventChanges() {
+	eventeditaster.style.display = "none";
+
+	let editedeventdatein = editeventdate.value;
+	let editedeventstarttimein = editeventtimestart.value;
+	let editedeventendtimein = editeventtimeend.value;
+	let editedeventlocationin = editeventlocation.value;
+	let editedeventopponentin = editeventopponent.value;
+
+	verifySaveEvent(editedeventstarttimein, editedeventendtimein, editedeventdatein, editedeventlocationin, editedeventopponentin);
 
 	if (savestatus) {
 		document.getElementById("editselectgame").style.background = "none";
@@ -475,10 +492,10 @@ function saveEventChanges() {
 					schedule[i] = {};
 					schedule[i] = {
 						"Event" : eventname,
-						"Date" : editedeventdate,
-						"Start Time" : editedeventstarttime,
-						"End Time" : editedeventendtime,
-						"Location" : capitalizeName(editedeventlocation)
+						"Date" : editedeventdatein,
+						"Start Time" : editedeventstarttimein,
+						"End Time" : editedeventendtimein,
+						"Location" : capitalizeName(editedeventlocationin)
 					}
 				}
 			}
@@ -491,48 +508,34 @@ function saveEventChanges() {
 					schedule[i] = {};
 					schedule[i] = {
 						"Event" : eventname,
-						"Date" : editedeventdate,
-						"Start Time" : editedeventstarttime,
-						"End Time" : editedeventendtime,
-						"Location" : capitalizeName(editedeventlocation),
-						"Opponent" : capitalizeName(editedeventopponent),
+						"Date" : editedeventdatein,
+						"Start Time" : editedeventstarttimein,
+						"End Time" : editedeventendtimein,
+						"Location" : capitalizeName(editedeventlocationin),
+						"Opponent" : capitalizeName(editedeventopponentin),
 						"Homeaway" : homeaway
 					}
 				}
 			}
 
 			if (homeaway === "Home") {
-				eventeditrow.cells[5].childNodes[0].innerHTML = "vs " + capitalizeName(editedeventopponent);
+				eventeditrow.cells[5].childNodes[0].innerHTML = "vs " + capitalizeName(editedeventopponentin);
 			}
 			else if (homeaway === "Away") {
-				eventeditrow.cells[5].childNodes[0].innerHTML = "@" + capitalizeName(editedeventopponent);
+				eventeditrow.cells[5].childNodes[0].innerHTML = "@" + capitalizeName(editedeventopponentin);
 			}
 			else {
-				eventeditrow.cells[5].childNodes[0].innerHTML = capitalizeName(editedeventopponent);
+				eventeditrow.cells[5].childNodes[0].innerHTML = capitalizeName(editedeventopponentin);
 			}
 		}
 
-		eventdiv.appendChild(editeventnamediv);
-		eventdiv.appendChild(editeventdatediv);
-		eventdiv.appendChild(editeventtimestartdiv);
-		eventdiv.appendChild(editeventtimeenddiv);
-		eventdiv.appendChild(editeventlocationdiv);
-		eventdiv.appendChild(editeventopponentdiv)
-		eventdiv.appendChild(edithomeawaydiv);
-
-		editeventnamediv.style.display = "none";
-		editeventdatediv.style.display = "none";
-		editeventtimestartdiv.style.display = "none";
-		editeventtimeenddiv.style.display = "none";
-		editeventlocationdiv.style.display = "none";
-		editeventopponentdiv.style.display = "none";
-		edithomeawaydiv.style.display = "none";
+		returnEditDivs();
 
 		eventeditrow.cells[0].childNodes[0].innerHTML = eventname;
-		eventeditrow.cells[1].childNodes[0].innerHTML = editedeventdate;
-		eventeditrow.cells[2].childNodes[0].innerHTML = editedeventstarttime;
-		eventeditrow.cells[3].childNodes[0].innerHTML = editedeventendtime;	
-		eventeditrow.cells[4].childNodes[0].innerHTML = capitalizeName(editedeventlocation);	
+		eventeditrow.cells[1].childNodes[0].innerHTML = editedeventdatein;
+		eventeditrow.cells[2].childNodes[0].innerHTML = editedeventstarttimein;
+		eventeditrow.cells[3].childNodes[0].innerHTML = editedeventendtimein;	
+		eventeditrow.cells[4].childNodes[0].innerHTML = capitalizeName(editedeventlocationin);	
 
 		eventeditrow.cells[0].childNodes[0].style.display = "table-cell";
 		eventeditrow.cells[1].childNodes[0].style.display = "table-cell";
@@ -560,14 +563,13 @@ function saveEventChanges() {
 	}
 }
 
-function deleteEvent() {
-	//Add in code to move editing elements to the div
+function returnEditDivs() {
 	eventdiv.appendChild(editeventnamediv);
 	eventdiv.appendChild(editeventdatediv);
 	eventdiv.appendChild(editeventtimestartdiv);
 	eventdiv.appendChild(editeventtimeenddiv);
 	eventdiv.appendChild(editeventlocationdiv);
-	eventdiv.appendChild(editeventopponentdiv);
+	eventdiv.appendChild(editeventopponentdiv)
 	eventdiv.appendChild(edithomeawaydiv);
 	eventdiv.appendChild(eventeditaster);
 
@@ -578,6 +580,11 @@ function deleteEvent() {
 	editeventlocationdiv.style.display = "none";
 	editeventopponentdiv.style.display = "none";
 	edithomeawaydiv.style.display = "none";
+}
+
+function deleteEvent() {
+	//Add in code to move editing elements to the div
+	returnEditDivs();
 
 	editeventaster.style.display = "none";
 	editstarttimeaster.style.display = "none";
