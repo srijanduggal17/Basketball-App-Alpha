@@ -1,5 +1,8 @@
 {
-  "name"    : "Template",
-  "version" : "1.1",
-  "main"    : "main.js"
+  "name": "Template",
+  "version": "1.1",
+  "main": "main.js",
+  "dependencies": {
+    "jquery": "^3.2.1"
+  }
 }

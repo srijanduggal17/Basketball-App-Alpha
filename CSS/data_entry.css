@@ -1,3 +1,8 @@
+#historytable {
+    position: absolute;
+    right: 5%;
+}
+
 .courtpath {
 	fill:none;
 	stroke:#000000;
