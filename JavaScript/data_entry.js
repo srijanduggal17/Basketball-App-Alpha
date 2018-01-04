@@ -157,14 +157,16 @@ window.onload = function loadstuff() {
 				let newplayerdata = {
 					"Player" : player,
 				};
-				playerdata.push(newplayerdata)
+				playerdata.push(player);
 			}
 		}
 
-		currentsequence = teamdata.val()[eventtype][eventkey]["State"]["Current Sequence"];
-		currentevent = teamdata.val()[eventtype][eventkey]["State"]["Current Event"];	
+		//currentsequence = teamdata.val()[eventtype][eventkey]["State"]["Current Sequence"];
+		//currentevent = teamdata.val()[eventtype][eventkey]["State"]["Current Event"];	
+		currentsequence = 0;
+		currentevent = 0;
 	}, function (error) {
-		console.error("Player list not pulled from database");
+		console.error("Teams list not pulled from database");
 		console.log(error.message);
 		console.log("Error code: " + error.code);
 	});
@@ -476,7 +478,7 @@ function choosePlayer() {
 			drawPassArrow(newevent["Location"][0]*offsetobj.width, newevent["Location"][1]*offsetobj.height, newevent2["Location"][0]*offsetobj.width, newevent2["Location"][1]*offsetobj.height);
 
 			newevent["To"] = player1;
-
+			console.log(newevent);
 			currentevent += 1;
 
 			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/State/Current Event')
@@ -586,9 +588,13 @@ function newHistRow(keys, event, msg) {
 	});
 }
 
-function deleteSequence() {
+function deleteSequence() {	
 	let evstodelete = this.dataset.events.split(",");
 	let seqtodelete = this.parentNode.parentNode.dataset.seq;
+
+	if (seqtodelete === String(currentsequence+1)) {
+		resetCourt();
+	}
 
 	let rowstodelete = [];
 
@@ -861,38 +867,43 @@ function inputDribble() {
 
 	else if (abletodribble && passoccurred && !dribbleoccurred) {
 		passoccurred = false;
-
 		newevent["Action"] = "Pass Made";
 		newevent2["Action"] = "Pass Received";
 
 		let pushkey1 = database.ref().push().key;
 		let pushkey2 = database.ref().push().key;
 		let updates = {};
-		updates[currentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
-		updates[player1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
 
+		let oldcurrentplayer = currentplayer;
+		let oldplayer1 = player1;
+
+
+		updates[oldcurrentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
+		updates[oldplayer1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
+
+		let histevent = newevent
 		database.ref('/teamslist/' + localStorage.currentteam + '/players/' + player1 + '/Name/').once("value", function(nam) {
-			let exacturl1 = currentplayer + "/ScrimmagePressure/" + pushkey1;
-			let exacturl2 = player1 + "/ScrimmagePressure/" + pushkey2;
+			let exacturl1 = oldcurrentplayer + "/ScrimmagePressure/" + pushkey1;
+			let exacturl2 = oldplayer1 + "/ScrimmagePressure/" + pushkey2;
 
-			newHistRow([exacturl1, exacturl2], newevent, "Pass Made to " + nam.val());
+			newHistRow([exacturl1, exacturl2], histevent, "Pass Made to " + nam.val());
+
+			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/')
+				.update(updates)
+				.then(() => {
+					console.log("Event pushed to database");
+				})
+				.catch(error => {
+					console.error("Event not pushed to database");
+					console.log(error.message);
+					console.log("Error code: " + error.code);
+				});
+
 		}, function (error) {
 				console.error("Player name not retrieved");
 				console.log(error.message);
 				console.log("Error code: " + error.code);
 		});
-
-
-		database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/')
-			.update(updates)
-			.then(() => {
-				console.log("Event pushed to database");
-			})
-			.catch(error => {
-				console.error("Event not pushed to database");
-				console.log(error.message);
-				console.log("Error code: " + error.code);
-			});
 
 		currentplayer = player1;
 		player1 = null;
@@ -926,6 +937,7 @@ function inputDribble() {
 
 	currentline = 0;
 	locationtimer = 0;
+
 
 	$(document).on( "mousemove", function( event ) {
 		let courtloc = [parseFloat(((event.pageX - leftoffset)/offsetobj.width).toFixed(numdec)), parseFloat(((event.pageY - topoffset)/offsetobj.height).toFixed(numdec))];
@@ -1490,6 +1502,57 @@ function drawNextCircle(player,x,y) {
 		.attr('onmouseup','');
 
 	currentcircle += 1;
+}
+
+function resetCourt() {
+	d3.select("#shots").selectAll("*").remove();
+	d3.select("#passes").selectAll("*").remove();
+	d3.select("#dribbles").selectAll("*").remove();
+	d3.select("#rebounds").selectAll("*").remove();
+	d3.select("#circles").selectAll("*").remove();
+	currentcircle = 0;
+	currentpass = 0;
+	currentdribble = 0;
+	currentshot = 0;
+	currentrebound = 0;
+
+	abletorebound = false;
+	abletoshoot = false;
+	abletodribble = false;
+	abletopass = false;
+
+	passwasattempted = false;
+	shotwasattempted = false;
+	passoccurred = false;
+	dribbleoccurred = false;
+
+	newevent = {};
+	newevent2 = {};
+
+	currentevent = 0;
+
+	database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/State/Current Event')
+		.set(0)
+		.then(() => {
+			console.log("Current Event reset");
+		})
+		.catch(error => {
+			console.error("Current Event not reset");
+			console.log(error.message);
+			console.log("Error code: " + error.code);
+		});
+
+
+	currentplayer = null;
+
+	actionbuttons.style.display = "none";
+	playerdropdowndiv.style.display = "none";
+
+	for (var i = 0; i < playerdata.length; i++) {
+		document.getElementById(playerdata[i]).style.display = "block";
+	}
+
+	hoopsvg.setAttribute('onmouseover','');
 }
 ///////////////////////////////////////////////////////
 
