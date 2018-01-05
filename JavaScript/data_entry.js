@@ -877,7 +877,6 @@ function inputDribble() {
 		let oldcurrentplayer = currentplayer;
 		let oldplayer1 = player1;
 
-
 		updates[oldcurrentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
 		updates[oldplayer1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
 
@@ -938,8 +937,7 @@ function inputDribble() {
 	currentline = 0;
 	locationtimer = 0;
 
-
-	$(document).on( "mousemove", function( event ) {
+	$(document).on( "mousemove", function(event) {
 		let courtloc = [parseFloat(((event.pageX - leftoffset)/offsetobj.width).toFixed(numdec)), parseFloat(((event.pageY - topoffset)/offsetobj.height).toFixed(numdec))];
 
 		if (currentline === 0) {
