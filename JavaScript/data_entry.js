@@ -7,9 +7,6 @@ const hoopy = .0866*window.innerHeight;
 const circleradius = .0247*window.innerHeight;
 const circlesvgwidth = .049459*window.innerHeight;
 const headmag = (15/647)*window.innerHeight;
-var offsetobj = courtsvg.getBoundingClientRect();
-var leftoffset = offsetobj.left;
-var topoffset = offsetobj.top;
 
 //DOM elements
 var checkbutton = document.getElementById('checkbutton');
@@ -24,6 +21,12 @@ var hoop = document.getElementById('hoop');
 var playerdropdowndiv = document.getElementById("playerdropdowndiv");
 var courtsvg = document.getElementById("court");
 var hoopsvg = document.getElementById('hoopsvg');
+var historytable = document.getElementById("historytable");
+
+//Visual offset
+var offsetobj = courtsvg.getBoundingClientRect();
+var leftoffset = offsetobj.left;
+var topoffset = offsetobj.top;
 
 //Data Variables
 var newevent = {};
@@ -49,6 +52,10 @@ var pressure = "Scrimmage";
 
 const eventtype = localStorage.currentevent.split(",")[0].toLowerCase() + "s";
 const eventkey = localStorage.currentevent.split(",")[1];
+
+var currentsequencekeys = [];
+var seqcounter = 0;
+var playerdata = [];
 
 //State Variables
 var abletopass = false;
@@ -115,6 +122,8 @@ function setupDOM() {
 	d3.select("#rebounds")
 		.attr('width',.808124*window.innerHeight)
 		.attr('height',.758714*window.innerHeight);	
+
+	historytable.style.top = topoffset + 'px';
 }
 
 firebase.auth().onAuthStateChanged(function(user) {
@@ -137,8 +146,6 @@ window.onload = function loadstuff() {
 	database.ref('/teamslist/' + localStorage.currentteam).once("value", function(teamdata) {
 		let playerslist = teamdata.val()[eventtype][eventkey]["Player Status"];
 
-		let playerdata = [];
-
 		for (const player in playerslist) {
 			if (playerslist[player] === "Practicing") {
 				let newplayerelem = document.createElement("p");
@@ -150,14 +157,16 @@ window.onload = function loadstuff() {
 				let newplayerdata = {
 					"Player" : player,
 				};
-				playerdata.push(newplayerdata)
+				playerdata.push(player);
 			}
 		}
 
-		currentsequence = teamdata.val()[eventtype][eventkey]["State"]["Current Sequence"];
-		currentevent = teamdata.val()[eventtype][eventkey]["State"]["Current Event"];	
+		//currentsequence = teamdata.val()[eventtype][eventkey]["State"]["Current Sequence"];
+		//currentevent = teamdata.val()[eventtype][eventkey]["State"]["Current Event"];	
+		currentsequence = 0;
+		currentevent = 0;
 	}, function (error) {
-		console.error("Player list not pulled from database");
+		console.error("Teams list not pulled from database");
 		console.log(error.message);
 		console.log("Error code: " + error.code);
 	});
@@ -215,6 +224,9 @@ function inputData() {
 			let pushkey = database.ref().push().key;
 			let updates = {};
 			updates[pushkey] = newevent;
+
+			let exacturl = currentplayer + '/ScrimmagePressure/' + pushkey;
+			newHistRow(exacturl, newevent);
 
 			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/ScrimmagePressure/')
 				.update(updates)
@@ -285,6 +297,9 @@ function inputData() {
 			let updates = {};
 			updates[pushkey] = newevent;
 
+			let exacturl = currentplayer + '/ScrimmagePressure/' + pushkey;
+			newHistRow(exacturl, newevent);
+
 			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/ScrimmagePressure/')
 				.update(updates)
 				.then(() => {
@@ -346,6 +361,17 @@ function inputData() {
 			let updates = {};
 			updates[currentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
 			updates[player1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
+
+			database.ref('/teamslist/' + localStorage.currentteam + '/players/' + player1 + '/Name/').once("value", function(nam) {
+				let exacturl1 = currentplayer + "/ScrimmagePressure/" + pushkey1;
+				let exacturl2 = player1 + "/ScrimmagePressure/" + pushkey2;				
+
+				newHistRow([exacturl1, exacturl2], newevent, "Pass Made to " + nam.val());
+			}, function (error) {
+					console.error("Player name not retrieved");
+					console.log(error.message);
+					console.log("Error code: " + error.code);
+			});
 
 			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/')
 				.update(updates)
@@ -452,7 +478,7 @@ function choosePlayer() {
 			drawPassArrow(newevent["Location"][0]*offsetobj.width, newevent["Location"][1]*offsetobj.height, newevent2["Location"][0]*offsetobj.width, newevent2["Location"][1]*offsetobj.height);
 
 			newevent["To"] = player1;
-
+			console.log(newevent);
 			currentevent += 1;
 
 			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/State/Current Event')
@@ -488,6 +514,123 @@ function choosePlayer() {
 	}
 }
 
+function newHistRow(keys, event, msg) {
+	//replace player id with player name
+	let newrow = document.createElement('tr');
+	let newseqnumsec = newrow.insertCell();
+	let newplayersec = newrow.insertCell();
+	let newactsec = newrow.insertCell();
+
+	let newplayer = document.createElement('p');	
+	let newact = document.createElement('p');
+
+	if (event.Action !== undefined) {
+		newact.innerHTML = event.Action;		
+	}
+
+	if (msg) {
+		newact.innerHTML = msg;
+	}
+
+	if (event.Origin === "Rebound") {
+		newact.innerHTML = "Rebound " + newact.innerHTML;
+	}
+
+	database.ref('/teamslist/' + localStorage.currentteam + '/players/' + currentplayer + '/Name/').once("value", function(nam) {
+		newplayer.innerHTML = nam.val();
+
+		newplayersec.appendChild(newplayer);
+		newactsec.appendChild(newact);
+
+		if (event.Event === 0 || event.Event === "0-a") {
+			currentsequencekeys = [];
+			seqcounter += 1;
+			let newdeletebutton = document.createElement('button');
+			newdeletebutton.innerHTML = "Delete Sequence";
+			newdeletebutton.addEventListener("click", deleteSequence);
+			newdeletebutton.id = "delbutton" + seqcounter;
+		
+			if (typeof(keys) === "object") {
+				currentsequencekeys.push(keys[0]);
+				currentsequencekeys.push(keys[1]);
+				newdeletebutton.setAttribute("data-events", [keys[0], keys[1]]);
+				console.log("pushobj");
+			}
+			else {
+				currentsequencekeys.push(keys);
+				console.log("pushsingle");
+				newdeletebutton.setAttribute("data-events", [keys]);
+			}
+			
+			newrow.insertCell().appendChild(newdeletebutton);
+		}
+		else {
+			if (typeof(keys) === "object") {
+				currentsequencekeys.push(keys[0]);
+				currentsequencekeys.push(keys[1]);
+			}
+			else {
+				currentsequencekeys.push(keys);
+			}
+
+			document.getElementById("delbutton" + seqcounter).setAttribute("data-events", currentsequencekeys);
+		}
+
+		let newseqnum = document.createElement('p');
+		newseqnum.innerHTML = seqcounter;
+		newseqnumsec.appendChild(newseqnum);
+		newrow.setAttribute("data-seq", seqcounter);
+		historytable.appendChild(newrow);
+	}, function (error) {
+			console.error("Player name not retrieved");
+			console.log(error.message);
+			console.log("Error code: " + error.code);
+	});
+}
+
+function deleteSequence() {	
+	let evstodelete = this.dataset.events.split(",");
+	let seqtodelete = this.parentNode.parentNode.dataset.seq;
+
+	if (seqtodelete === String(currentsequence+1)) {
+		resetCourt();
+	}
+
+	let rowstodelete = [];
+
+	for (let i = 1; i < historytable.rows.length; i++) {
+		if (historytable.rows[i].dataset.seq === seqtodelete) {
+			rowstodelete.push(historytable.rows[i]);
+		}
+	}
+
+	for (let i = 0; i < rowstodelete.length; i++) {
+		rowstodelete[i].remove();
+		console.log(rowstodelete);
+	}
+
+	let promarray = [];
+
+	for (let j = 0; j < evstodelete.length; j++) {
+		promarray.push(
+			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + evstodelete[j])
+				.remove()
+		)
+	}
+	
+	Promise.all(promarray)
+		.then(() => {
+			console.log("All events in sequence deleted");
+		})
+		.catch(error => {
+			console.error("Events not deleted from database");
+			console.log(error.message);
+			console.log("Error code: " + error.code);
+		});
+
+	//Adjust sequence counter
+}
+
 function chooseAction() {
 	if (pressure === "Drill") {
 		newevent["Action"] = this.dataset.action;
@@ -496,6 +639,8 @@ function chooseAction() {
 		let updates = {};
 		updates[pushkey] = newevent;
 
+		let exacturl = currentplayer + '/DrillPressure/' + pushkey
+		newHistRow(exacturl, newevent);
 		database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/DrillPressure/')
 			.update(updates)
 			.then(() => {
@@ -522,6 +667,9 @@ function chooseAction() {
 			let pushkey = database.ref().push().key;
 			let updates = {};
 			updates[pushkey] = newevent;
+
+			let exacturl = currentplayer + '/ScrimmagePressure/' + pushkey;
+			newHistRow(exacturl, newevent);
 
 			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/ScrimmagePressure/')
 				.update(updates)
@@ -619,6 +767,9 @@ function chooseAction() {
 			let updates = {};
 			updates[pushkey] = newevent;
 
+			let exacturl = currentplayer + '/ScrimmagePressure/' + pushkey
+			newHistRow(exacturl, newevent, "Dribble Stolen");
+
 			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/ScrimmagePressure/')
 				.update(updates)
 				.then(() => {
@@ -688,6 +839,9 @@ function inputDribble() {
 		let updates = {};
 		updates[pushkey] = newevent;
 
+		let exacturl = currentplayer + '/ScrimmagePressure/' + pushkey;
+		newHistRow(exacturl, newevent);
+
 		database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/ScrimmagePressure/')
 			.update(updates)
 			.then(() => {
@@ -713,26 +867,42 @@ function inputDribble() {
 
 	else if (abletodribble && passoccurred && !dribbleoccurred) {
 		passoccurred = false;
-
 		newevent["Action"] = "Pass Made";
 		newevent2["Action"] = "Pass Received";
 
 		let pushkey1 = database.ref().push().key;
 		let pushkey2 = database.ref().push().key;
 		let updates = {};
-		updates[currentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
-		updates[player1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
 
-		database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/')
-			.update(updates)
-			.then(() => {
-				console.log("Event pushed to database");
-			})
-			.catch(error => {
-				console.error("Event not pushed to database");
+		let oldcurrentplayer = currentplayer;
+		let oldplayer1 = player1;
+
+		updates[oldcurrentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
+		updates[oldplayer1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
+
+		let histevent = newevent
+		database.ref('/teamslist/' + localStorage.currentteam + '/players/' + player1 + '/Name/').once("value", function(nam) {
+			let exacturl1 = oldcurrentplayer + "/ScrimmagePressure/" + pushkey1;
+			let exacturl2 = oldplayer1 + "/ScrimmagePressure/" + pushkey2;
+
+			newHistRow([exacturl1, exacturl2], histevent, "Pass Made to " + nam.val());
+
+			database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/')
+				.update(updates)
+				.then(() => {
+					console.log("Event pushed to database");
+				})
+				.catch(error => {
+					console.error("Event not pushed to database");
+					console.log(error.message);
+					console.log("Error code: " + error.code);
+				});
+
+		}, function (error) {
+				console.error("Player name not retrieved");
 				console.log(error.message);
 				console.log("Error code: " + error.code);
-			});
+		});
 
 		currentplayer = player1;
 		player1 = null;
@@ -767,7 +937,7 @@ function inputDribble() {
 	currentline = 0;
 	locationtimer = 0;
 
-	$(document).on( "mousemove", function( event ) {
+	$(document).on( "mousemove", function(event) {
 		let courtloc = [parseFloat(((event.pageX - leftoffset)/offsetobj.width).toFixed(numdec)), parseFloat(((event.pageY - topoffset)/offsetobj.height).toFixed(numdec))];
 
 		if (currentline === 0) {
@@ -873,6 +1043,17 @@ function lossTo() {
 	updates[currentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
 	updates[player1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
 
+		database.ref('/teamslist/' + localStorage.currentteam + '/players/' + player1 + '/Name/').once("value", function(nam) {
+			let exacturl1 = currentplayer + "/ScrimmagePressure/" + pushkey1;
+			let exacturl2 = player1 + "/ScrimmagePressure/" + pushkey2;
+
+			newHistRow([exacturl1, exacturl2], newevent, "Pass Missed to " + nam.val() + ' ' + newevent["Loss To"]);
+		}, function (error) {
+				console.error("Player name not retrieved");
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+		});
+
 	database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/')
 		.update(updates)
 		.then(() => {
@@ -910,6 +1091,9 @@ function notRebounded() {
 	let pushkey = database.ref().push().key;
 	let updates = {};
 	updates[pushkey] = newevent;
+
+	let exacturl = currentplayer + '/ScrimmagePressure/' + pushkey;
+	newHistRow(exacturl, newevent);
 
 	database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/ScrimmagePressure/')
 		.update(updates)
@@ -978,6 +1162,9 @@ function chooseShot() {
 		let updates = {};
 		updates[pushkey] = newevent;
 
+		let exacturl = currentplayer + '/ScrimmagePressure/' + pushkey;
+		newHistRow(exacturl, newevent);
+
 		database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/' + currentplayer + '/ScrimmagePressure/')
 			.update(updates)
 			.then(() => {
@@ -1013,7 +1200,7 @@ function chooseShot() {
 			});
 	}
 
-	else if (abletoshoot && !shotwasattempted && passoccurred && dribbleoccurred) {
+	else if (abletoshoot && !shotwasattempted && passoccurred && !dribbleoccurred) {
 		drawShotArrow(newevent2["Location"][0]*offsetobj.width, newevent2["Location"][1]*offsetobj.height)
 
 		newevent["Action"] = "Pass Made";
@@ -1024,6 +1211,19 @@ function chooseShot() {
 		let updates = {};
 		updates[currentplayer + "/ScrimmagePressure/" + pushkey1] = newevent;
 		updates[player1 + "/ScrimmagePressure/" + pushkey2] = newevent2;
+
+		database.ref('/teamslist/' + localStorage.currentteam + '/players/' + player1 + '/Name/').once("value", function(nam) {
+			let exacturl1 = currentplayer + "/ScrimmagePressure/" + pushkey1;
+			let exacturl2 = player1 + "/ScrimmagePressure/" + pushkey2;
+
+			newHistRow([exacturl1, exacturl2], newevent, "Pass Made to " + nam.val());
+		}, function (error) {
+				console.error("Player name not retrieved");
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+		});
+
+		document.getElementById(player1).style.display = "block";
 
 		database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/Data/')
 			.update(updates)
@@ -1300,6 +1500,57 @@ function drawNextCircle(player,x,y) {
 		.attr('onmouseup','');
 
 	currentcircle += 1;
+}
+
+function resetCourt() {
+	d3.select("#shots").selectAll("*").remove();
+	d3.select("#passes").selectAll("*").remove();
+	d3.select("#dribbles").selectAll("*").remove();
+	d3.select("#rebounds").selectAll("*").remove();
+	d3.select("#circles").selectAll("*").remove();
+	currentcircle = 0;
+	currentpass = 0;
+	currentdribble = 0;
+	currentshot = 0;
+	currentrebound = 0;
+
+	abletorebound = false;
+	abletoshoot = false;
+	abletodribble = false;
+	abletopass = false;
+
+	passwasattempted = false;
+	shotwasattempted = false;
+	passoccurred = false;
+	dribbleoccurred = false;
+
+	newevent = {};
+	newevent2 = {};
+
+	currentevent = 0;
+
+	database.ref('/teamslist/' + localStorage.currentteam + '/' + eventtype + '/' + eventkey + '/State/Current Event')
+		.set(0)
+		.then(() => {
+			console.log("Current Event reset");
+		})
+		.catch(error => {
+			console.error("Current Event not reset");
+			console.log(error.message);
+			console.log("Error code: " + error.code);
+		});
+
+
+	currentplayer = null;
+
+	actionbuttons.style.display = "none";
+	playerdropdowndiv.style.display = "none";
+
+	for (var i = 0; i < playerdata.length; i++) {
+		document.getElementById(playerdata[i]).style.display = "block";
+	}
+
+	hoopsvg.setAttribute('onmouseover','');
 }
 ///////////////////////////////////////////////////////
 

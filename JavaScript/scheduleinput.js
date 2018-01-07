@@ -642,7 +642,6 @@ function saveEvents() {
 								"Current Sequence": 0,
 								"Current Event": 0
 							},
-							"Next Sequence": 0
 						})
 						.then(() => {
 							console.log("Event pushed to practice list");
@@ -659,7 +658,6 @@ function saveEvents() {
 								"Current Sequence": 0,
 								"Current Event": 0
 							},
-							"Next Sequence": 0
 						})
 						.then(() => {
 							console.log("Event pushed to game list");
