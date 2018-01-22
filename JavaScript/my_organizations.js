@@ -43,12 +43,15 @@ firebase.auth().onAuthStateChanged(function(user) {
 				newdiv.addEventListener("click", orgPage);
 				let newtext = document.createElement('p');
 
+				console.log(org);
+
 				database.ref('/organizationslist/' + myorgs.val()[org])
 					.once("value", function(orgobj) {
-						newtext.innerHTML = orgobj.val().name;
-						newdiv.setAttribute('data-name', orgobj.val().name);
-						newdiv.setAttribute('data-level', orgobj.val().level);
-						newdiv.setAttribute('data-location', orgobj.val().location);
+						console.log(orgobj.val());
+						newtext.innerHTML = orgobj.val()["name"];
+						newdiv.setAttribute('data-name', orgobj.val()["name"]);
+						newdiv.setAttribute('data-level', orgobj.val()["level"]);
+						newdiv.setAttribute('data-location', orgobj.val()["location"]);
 					}, function (error) {
 						console.error("Organizations list not pulled from database");
 						console.log(error.message);
