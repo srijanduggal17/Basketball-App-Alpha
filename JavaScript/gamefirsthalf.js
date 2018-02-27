@@ -1559,6 +1559,7 @@ function countDown() {
 		document.getElementById("countdowndiv").style.display = "none";
 		document.getElementById("timeoutdiv").style.display = "none";
 		quarterdisplay.innerHTML = "Half Over";
+		window.location.href = "../HTML/halftime_analysis.html"
 	}
 }
 
