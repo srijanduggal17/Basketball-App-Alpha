@@ -92,7 +92,12 @@ function saveStatus() {
 		.update(updates)
 		.then(() => {
 			console.log("Player status updated");
-			window.location.href = "../HTML/data_entry.html"
+			if (eventtype === "games") {
+				window.location.href = "../HTML/gamefirsthalf.html"
+			}
+			else {
+				window.location.href = "../HTML/data_entry.html"
+			}
 		})
 		.catch(error => {
 			console.error("Player status not updated");

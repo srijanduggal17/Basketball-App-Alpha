@@ -1,0 +1,54 @@
+.tooltip {
+  background: #eee;
+  box-shadow: 0 0 5px #999999;
+  color: #333;
+  display: none;
+  font-size: 12px;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  width: 150px;
+  z-index: 10;
+}
+
+.tooltip2 {
+  background: #eee;
+  box-shadow: 0 0 5px #999999;
+  color: #333;
+  display: none;
+  font-size: 12px;
+  padding: 10px;
+  position: absolute;
+  text-align: center;
+  width: 150px;
+  z-index: 10;
+}
+
+#piechart1div {
+  position: relative;
+}
+
+#piechart2div {
+  position: relative;
+}
+
+.chart div {
+  font: 10px sans-serif;
+  background-color: steelblue;
+  text-align: right;
+  padding: 3px;
+  margin: 1px;
+  color: white;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+.bar:hover {
+  fill: brown;
+}
+
+.axis--x path {
+  display: none;
+}

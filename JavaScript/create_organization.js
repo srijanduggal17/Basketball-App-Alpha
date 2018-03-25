@@ -41,11 +41,11 @@ function newOrganization() {
 	var locationin = document.getElementById('location').value;
 	var levelin = "";
 
-	verifyNewOrg(levelin, school, location);
+	verifyNewOrg(levelin, schoolin, locationin);
 
 	//Push organization to database
 	if (pagestatus) {
-		let neworganization = {
+		let neworg = {
 			owner: currentUser.uid,
 			location: capitalizeName(locationin),
 			name: capitalizeName(schoolin),
@@ -57,7 +57,7 @@ function newOrganization() {
 			}
 		};
 
-		pushOrg();
+		pushOrg(neworg);
 
 		//Clear values of input fields
 		document.getElementById('school').value = "";
@@ -124,8 +124,9 @@ function setOrgteamstatus() {
 			.then(() => {
 				console.log("Orgteamstatus updated to: " + ["true+", false]);
 				localStorage.removeItem("orgstatus");
-				localStorage.setItem("currentorganization",pushkey)
+				localStorage.setItem("currentorganization", pushkey)
 				window.location.href = "../HTML/create_team.html";
+				pushkey = null;
 			})
 			.catch(error => {
 				console.error("Orgteamstatus not updated to: " + ["true+", false]);
@@ -139,8 +140,10 @@ function setOrgteamstatus() {
 			.set(true)
 			.then(() => {
 				console.log("Orgteamstatus[0] updated to true");
-				localStorage.setItem("currentorganization",pushkey)
+				console.log(pushkey);
+				localStorage.setItem("currentorganization", pushkey);
 				window.location.href = "../HTML/create_team.html";
+				pushkey = null;
 			})
 			.catch(error => {
 				console.error("Orgteamstatus[0] not updated to true");
@@ -148,8 +151,6 @@ function setOrgteamstatus() {
 				console.log("Error code: " + error.code);
 			});
 	}
-
-	pushkey = null;
 }
 
 function verifyNewOrg(level, school, location) {
@@ -183,10 +184,10 @@ function verifyNewOrg(level, school, location) {
 	}
 }
 
-function pushOrg() {
+function pushOrg(orgtopush) {
 	pushkey = database.ref('/organizationslist/').push().key;
 	let updates = {};
-	updates[pushkey] = neworganization;
+	updates[pushkey] = orgtopush;
 
 	//Push organization to organization list
 	let pushorg = database.ref('/organizationslist/')
