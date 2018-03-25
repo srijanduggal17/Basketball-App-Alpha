@@ -4,6 +4,15 @@ document.getElementById("editgeninfo").addEventListener("click", editGenInfo);
 document.getElementById('createstaff').addEventListener("click", createStaff);
 document.getElementById("editstaff").addEventListener("click", editStaffSection);
 document.getElementById("editplayers").addEventListener("click", editPlayerSection);
+document.getElementById("myorgnav").addEventListener("click", toMyOrg);
+document.getElementById("myteamsnav").addEventListener("click", toMyTeam);
+document.getElementById("homenav").addEventListener("click", navChange);
+document.getElementById("schedulenav").addEventListener("click", navChange);
+document.getElementById("datainputnav").addEventListener("click", navChange);
+document.getElementById("individualsummariesnav").addEventListener("click", navChange);
+document.getElementById("teamsummarynav").addEventListener("click", navChange);
+document.getElementById("teaminfonav").addEventListener("click", navChange);
+document.getElementById("accountinfonav").addEventListener("click", navChange);
 
 var teamnameedit = document.getElementById("editteamname");
 var headcoachedit = document.getElementById("editheadcoach");
@@ -35,12 +44,16 @@ var editplayerheightinches = document.getElementById('editplayerheightinches');
 var editplayernumberdiv = document.getElementById('editplayernumberdiv');
 var editplayernumber = document.getElementById('editplayernumber');
 var playereditaster = document.getElementById('playereditaster');
+var inteditedheight;
+var inteditednumber;
 
 //State variables
+var genstatus = true;
 var staffstatus = true;
 var playerstatus = true;
 var editstaffstatus = true;
 var editplayerstatus = true;
+var iseditinggen = false;
 var iseditingstaff = false;
 var iseditingplayers = false;
 
@@ -187,33 +200,62 @@ function editGenInfo() {
 	this.innerHTML = "Check";
 	this.removeEventListener("click", editGenInfo);
 	this.addEventListener("click", saveGenInfo);
+	iseditinggen = true;
+}
+
+function verifyGenInfo(tmname, hdcoach) {
+	if (tmname === "" || tmname.match(allowedteamname) === null) {
+		document.getElementById('teamnameaster').style.display = "inline";
+		genstatus = false;
+	}
+	else {
+		document.getElementById('teamnameaster').style.display = "none";
+	}
+	if (hdcoach === "" || hdcoach.match(allowedname) === null) {
+		document.getElementById('headcoachaster').style.display = "inline";
+		genstatus = false;
+	}
+	else {
+		document.getElementById('headcoachaster').style.display = "none";
+	}
 }
 
 function saveGenInfo() {
-	teamname.style.display = "block";
-	headcoach.style.display = "block";
-	teamnameedit.style.display = "none";
-	headcoachedit.style.display = "none";
-	teamname.innerHTML = capitalizeName(teamnameedit.value);
-	headcoach.innerHTML = capitalizeName(headcoachedit.value);
-	this.innerHTML = "Edit";
-	this.removeEventListener("click", saveGenInfo);
-	this.addEventListener("click", editGenInfo);
+	let editedteamname = teamnameedit.value;
+	let editedheadcoach = headcoachedit.value;
 
-	let updates = {};
-	updates['teamname'] = capitalizeName(teamnameedit.value);
-	updates['headcoach'] = capitalizeName(headcoachedit.value);
+	genstatus = true;
 
-	teamref
-		.update(updates)
-		.then(() => {
-			console.log("Headcoach and Teamname updated");
-		})
-		.catch(error => {
-			console.error("Headcoach and Teamname not updated");
-			console.log(error.message);
-			console.log("Error code: " + error.code);
-		});
+	verifyGenInfo(editedteamname, editedheadcoach);
+
+	if (genstatus) {
+		teamname.style.display = "block";
+		headcoach.style.display = "block";
+		teamnameedit.style.display = "none";
+		headcoachedit.style.display = "none";
+		teamname.innerHTML = capitalizeName(editedteamname);
+		headcoach.innerHTML = capitalizeName(editedheadcoach);
+		this.innerHTML = "Edit";
+		this.removeEventListener("click", saveGenInfo);
+		this.addEventListener("click", editGenInfo);
+
+		let updates = {};
+		updates['teamname'] = capitalizeName(teamnameedit.value);
+		updates['headcoach'] = capitalizeName(headcoachedit.value);
+
+		iseditinggen = false;
+
+		teamref
+			.update(updates)
+			.then(() => {
+				console.log("Headcoach and Teamname updated");
+			})
+			.catch(error => {
+				console.error("Headcoach and Teamname not updated");
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+			});
+	}
 }
 
 function editStaffSection() {
@@ -229,35 +271,41 @@ function editStaffSection() {
 }
 
 function saveStaffSection() {
-	let pushstaff = {};
+	if (!iseditingstaff) {
+		staffeditaster.style.display = "none";
+		let pushstaff = {};
 
-	for (let i = 0; i < staff.length; i++) {
-		pushstaff[staff[i][2]] = {
-			Name: staff[i][0],
-			Role: staff[i][1]
-		};
+		for (let i = 0; i < staff.length; i++) {
+			pushstaff[staff[i][2]] = {
+				Name: staff[i][0],
+				Role: staff[i][1]
+			};
+		}
+
+		teamref.child("staff")
+			.set(pushstaff)
+			.then(() => {
+				console.log("Staff updated");
+			})
+			.catch(error => {
+				console.error("Staff not updated");
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+			});
+
+		document.getElementById('staffinputrow').style.display = "none";
+		//Hide edit/delete buttons of other rows
+		for (let i = 1; i < stafftable.rows.length - 1; i++) {
+			$(stafftable.rows[i].cells[2]).children('button')[0].style.display = "none";
+			$(stafftable.rows[i].cells[3]).children('button')[0].style.display = "none";
+		}
+		this.innerHTML = "Edit";
+		this.addEventListener("click", editStaffSection);
+		this.removeEventListener("click", saveStaffSection);		
 	}
-
-	teamref.child("staff")
-		.set(pushstaff)
-		.then(() => {
-			console.log("Staff updated");
-		})
-		.catch(error => {
-			console.error("Staff not updated");
-			console.log(error.message);
-			console.log("Error code: " + error.code);
-		});
-
-	document.getElementById('staffinputrow').style.display = "none";
-	//Hide edit/delete buttons of other rows
-	for (let i = 1; i < stafftable.rows.length - 1; i++) {
-		$(stafftable.rows[i].cells[2]).children('button')[0].style.display = "none";
-		$(stafftable.rows[i].cells[3]).children('button')[0].style.display = "none";
+	else {
+		staffeditaster.style.display = "inline";
 	}
-	this.innerHTML = "Edit";
-	this.addEventListener("click", editStaffSection);
-	this.removeEventListener("click", saveStaffSection);
 }
 
 function editPlayerSection() {
@@ -273,38 +321,44 @@ function editPlayerSection() {
 }
 
 function savePlayerSection() {
-	let pushplayers = {};
+	if (!iseditingplayers) {
+		playereditaster.style.display = "none";
+		let pushplayers = {};
 
-	for (let i = 0; i < player.length; i++) {
-		pushplayers[player[i][4]] = {
-			Name: player[i][0],
-			Position: player[i][1],
-			Height: player[i][2],
-			"Jersey Number": player[i][3]
-		};
+		for (let i = 0; i < player.length; i++) {
+			pushplayers[player[i][4]] = {
+				Name: player[i][0],
+				Position: player[i][1],
+				Height: player[i][2],
+				"Jersey Number": player[i][3]
+			};
+		}
+
+		teamref.child("players")
+			.set(pushplayers)
+			.then(() => {
+				console.log("Players updated");
+			})
+			.catch(error => {
+				console.error("Players not updated");
+				console.log(error.message);
+				console.log("Error code: " + error.code);
+			});
+
+
+		document.getElementById('playerinputrow').style.display = "none";
+		//Hide edit/delete buttons of other rows
+		for (let i = 1; i < playertable.rows.length - 1; i++) {
+			$(playertable.rows[i].cells[4]).children('button')[0].style.display = "none";
+			$(playertable.rows[i].cells[5]).children('button')[0].style.display = "none";
+		}
+		this.innerHTML = "Edit";
+		this.addEventListener("click", editPlayerSection);
+		this.removeEventListener("click", savePlayerSection);
 	}
-
-	teamref.child("players")
-		.set(pushplayers)
-		.then(() => {
-			console.log("Players updated");
-		})
-		.catch(error => {
-			console.error("Players not updated");
-			console.log(error.message);
-			console.log("Error code: " + error.code);
-		});
-
-
-	document.getElementById('playerinputrow').style.display = "none";
-	//Hide edit/delete buttons of other rows
-	for (let i = 1; i < playertable.rows.length - 1; i++) {
-		$(playertable.rows[i].cells[4]).children('button')[0].style.display = "none";
-		$(playertable.rows[i].cells[5]).children('button')[0].style.display = "none";
+	else {
+		playereditaster.style.display = "inline";
 	}
-	this.innerHTML = "Edit";
-	this.addEventListener("click", editPlayerSection);
-	this.removeEventListener("click", savePlayerSection);
 }
 
 /////////////// This section is for the staff table ///////////////
@@ -435,6 +489,7 @@ function saveStaffChanges() {
 
 	//This executes if inputs are valid
 	if (editstaffstatus) {
+		staffeditaster.style.display = "none";
 		//Change staff data in array
 		for (let i = 0; i < staff.length; i++) {
 			if (staff[i][2] === this.parentNode.parentNode.id) {
@@ -706,14 +761,15 @@ function savePlayer() {
 	let editedpositionin = editplayerposition.value;
 	let editedheightin = [editplayerheightfeet.value, editplayerheightinches.value];
 	let editednumberin = editplayernumber.value;
-	let inteditednumber = parseInt(editednumber);
-	let inteditedheight = [parseInt(editedheight[0]), parseInt(editedheight[1])];
+	inteditednumber = parseInt(editednumberin);
+	inteditedheight = [parseInt(editedheightin[0]), parseInt(editedheightin[1])];
 
 	//Show/hide red asterisk if input is invalid
 	verifySavePlayer(editednamein, editedpositionin, editedheightin, editednumberin);
 
 	//This executes if inputs are valid
 	if (editplayerstatus) {
+		playereditaster.style.display = "none";
 		//Change player data in array
 		for (let i = 0; i < player.length; i++) {
 			if (player[i][4] === this.parentNode.parentNode.id) {
@@ -839,4 +895,25 @@ function deletePlayer() {
 	//Change editingplayer state variable
 	iseditingplayers = false;
 	editplayerstatus = true;
+}
+
+function toMyOrg() {
+	if (!iseditinggen && !iseditingplayers && !iseditingstaff) {
+		localStorage.removeItem("currentteam");
+		localStorage.removeItem("currentorganization");
+		window.location.href = "my_organizations.html";	
+	}
+}
+
+function toMyTeam() {
+	if (!iseditinggen && !iseditingplayers && !iseditingstaff) {
+		localStorage.removeItem("currentteam");
+		window.location.href = "my_teams.html";
+	}	
+}
+
+function navChange() {
+	if (!iseditinggen && !iseditingplayers && !iseditingstaff) {
+		window.location.href = this.dataset.link;
+	}
 }

@@ -1,3 +1,6 @@
+document.getElementById("myorgnav").addEventListener("click", toMyOrg);
+document.getElementById("myteamsnav").addEventListener("click", toMyTeam);
+
 var current = new Date();
 var future =  new Date(2028,11,31);
 
@@ -122,4 +125,15 @@ function homePage() {
 	console.log("event clicked");
 	localStorage.setItem("currentevent", [this.childNodes[1].innerHTML.substr(5), this.dataset.key]);
 	window.location.href = "../HTML/data_setup.html";
+}
+
+function toMyOrg() {
+	localStorage.removeItem("currentteam");
+	localStorage.removeItem("currentorganization");
+	window.location.href = "my_organizations.html";
+}
+
+function toMyTeam() {
+	localStorage.removeItem("currentteam");
+	window.location.href = "my_teams.html";
 }
