@@ -129,12 +129,17 @@ function makeEvent() {
 			newobj.Opponent = capitalizeName(eventopponentin);
 		}
 
-		let newrow = sortNewEvent(eventdatein, eventstarttimein);
+		let pushindex = sortNewEvent(eventdatein, eventstarttimein);
 
-		schedule.push(newobj);
+		if (pushindex != -1) {
+			schedule.splice(pushindex,0,newobj);
+		}
+		else {
+			schedule.push(newobj);
+		}
 
-		addScheduleRow(newrow, eventdatein, eventstarttimein, eventendtimein, eventlocationin, eventopponentin);
-
+		displaySchedule();
+		
 		document.getElementById("neweventdate").value="";
 		document.getElementById("neweventtimestart").value="";
 		document.getElementById("neweventtimeend").value="";
@@ -157,10 +162,10 @@ function sortNewEvent(eventdate, eventstarttime) {
 	let newinput = new Date(splitdate[0], parseInt(splitdate[1]) - 1, splitdate[2], splitstarttime[0],splitstarttime[1]);
 	let newtime = newinput.getTime();
 	
-	let row;
+	let index;
 
 	if (schedule.length == 0) {
-		row = eventtable.insertRow(eventtable.rows.length-1);
+		index = -1;
 	}
 	else {
 		for (let i = 0; i < schedule.length; i++) {
@@ -171,24 +176,26 @@ function sortNewEvent(eventdate, eventstarttime) {
 			let oldinput = new Date(scheduledate[0], parseInt(scheduledate[1]) - 1, scheduledate[2], scheduletime[0],scheduletime[1]);
 			let oldtime = oldinput.getTime();
 			if (oldtime > newtime) {
-				row = eventtable.insertRow(i+1);
+				index = i;
 				break;
 			}
 			else if (i == (schedule.length-1)) {
-				row = eventtable.insertRow(eventtable.rows.length - 1);
+				index = -1;
 			}
 		}
 	}
-	return row;
+
+	return index;
 }
 
-function addScheduleRow(row, eventdate, eventstarttime, eventendtime, eventlocation, eventopponent) {
+function addScheduleRow(row, eventname, eventdate, eventstarttime, eventendtime, eventlocation, eventopponent, eventhomeaway) {
 	let newnamesection = row.insertCell();
 	let newdatesection = row.insertCell();
 	let newstarttimesection = row.insertCell();
 	let newendtimesection = row.insertCell();
 	let newlocationsection = row.insertCell();
 	let newopponentsection = row.insertCell();
+
 	let neweditcell = row.insertCell();
 	let newdeletecell = row.insertCell();
 
@@ -201,17 +208,18 @@ function addScheduleRow(row, eventdate, eventstarttime, eventendtime, eventlocat
 	let newendtime = document.createElement('p');
 	newendtime.innerHTML = eventendtime;
 	let newlocation = document.createElement('p');
-	newlocation.innerHTML = capitalizeName(eventlocation);
+	newlocation.innerHTML = eventlocation;
 	let newopponent = document.createElement('p');
-
-	if (homeaway === "Home") {
-		newopponent.innerHTML = "vs " + capitalizeName(eventopponent);
-	}
-	else if (homeaway === "Away") {
-		newopponent.innerHTML = "@" + capitalizeName(eventopponent);
-	}
-	else {
-		newopponent.innerHTML = capitalizeName(eventopponent);
+	if (eventname === "Game") {
+		if (eventhomeaway === "Home") {
+			newopponent.innerHTML = "vs " + eventopponent;
+		}
+		else if (eventhomeaway === "Away") {
+			newopponent.innerHTML = "@" + eventopponent;
+		}
+		else {
+			newopponent.innerHTML = eventopponent;
+		}
 	}
 
 	newnamesection.appendChild(newname);
@@ -486,76 +494,41 @@ function saveEventChanges() {
 		document.getElementById("editselectaway").style.background = "none";
 		document.getElementById("editselecthome").style.background = "none";
 
-		if (eventname === "Practice") {
-			for (let i = 0; i < schedule.length; i++) {
-				if (schedule[i]["Date"] === eventeditdate) {
-					schedule[i] = {};
-					schedule[i] = {
-						"Event" : eventname,
-						"Date" : editedeventdatein,
-						"Start Time" : editedeventstarttimein,
-						"End Time" : editedeventendtimein,
-						"Location" : capitalizeName(editedeventlocationin)
-					}
-				}
-			}
-
-			eventeditrow.cells[5].childNodes[0].innerHTML = "";		
-		}
-		else if (eventname === "Game") {
-			for (let i = 0; i < schedule.length; i++) {
-				if (schedule[i]["Date"] === eventeditdate) {
-					schedule[i] = {};
-					schedule[i] = {
-						"Event" : eventname,
-						"Date" : editedeventdatein,
-						"Start Time" : editedeventstarttimein,
-						"End Time" : editedeventendtimein,
-						"Location" : capitalizeName(editedeventlocationin),
-						"Opponent" : capitalizeName(editedeventopponentin),
-						"Homeaway" : homeaway
-					}
-				}
-			}
-
-			if (homeaway === "Home") {
-				eventeditrow.cells[5].childNodes[0].innerHTML = "vs " + capitalizeName(editedeventopponentin);
-			}
-			else if (homeaway === "Away") {
-				eventeditrow.cells[5].childNodes[0].innerHTML = "@" + capitalizeName(editedeventopponentin);
-			}
-			else {
-				eventeditrow.cells[5].childNodes[0].innerHTML = capitalizeName(editedeventopponentin);
-			}
-		}
-
-		returnEditDivs();
-
-		eventeditrow.cells[0].childNodes[0].innerHTML = eventname;
-		eventeditrow.cells[1].childNodes[0].innerHTML = editedeventdatein;
-		eventeditrow.cells[2].childNodes[0].innerHTML = editedeventstarttimein;
-		eventeditrow.cells[3].childNodes[0].innerHTML = editedeventendtimein;	
-		eventeditrow.cells[4].childNodes[0].innerHTML = capitalizeName(editedeventlocationin);	
-
-		eventeditrow.cells[0].childNodes[0].style.display = "table-cell";
-		eventeditrow.cells[1].childNodes[0].style.display = "table-cell";
-		eventeditrow.cells[2].childNodes[0].style.display = "table-cell";
-		eventeditrow.cells[3].childNodes[0].style.display = "table-cell";
-		eventeditrow.cells[4].childNodes[0].style.display = "table-cell";
-		eventeditrow.cells[5].childNodes[0].style.display = "table-cell";
-
-
 		document.getElementById('eventinputrow').style.display = "table-row";
 
-		$(eventeditrow.cells[6]).children('button')[0].innerHTML = "Edit";
-		$(eventeditrow.cells[6]).children('button')[0].removeEventListener("click", saveEventChanges);
-		$(eventeditrow.cells[6]).children('button')[0].addEventListener("click", editEvent);
-
-
-		for (let i = 1; i < eventtable.rows.length - 1; i++) {
-			$(eventtable.rows[i].cells[6]).children('button')[0].style.display = "table-cell";
-			$(eventtable.rows[i].cells[7]).children('button')[0].style.display = "table-cell";
+		for (let i = 0; i < schedule.length; i++) {
+				if (schedule[i]["Date"] === eventeditdate && schedule[i]["Start Time"] === eventeditstarttime) {
+					schedule.splice(i,1);
+				}
 		}
+
+		let newobj = {
+			"Event" : eventname,
+			"Date" : editedeventdatein,
+			"Start Time" : editedeventstarttimein,
+			"End Time" : editedeventendtimein,
+			"Location" : capitalizeName(editedeventlocationin)
+		}
+		if (eventname === "Game") {
+			if (homeaway === "Home") {
+				newobj.Homeaway = "Home";
+			}
+			else {
+				newobj.Homeaway = "Away";
+			}
+			newobj.Opponent = capitalizeName(editedeventopponentin);
+		}
+
+		let pushindex = sortNewEvent(editedeventdatein, editedeventstarttimein);
+
+		if (pushindex != -1) {
+			schedule.splice(pushindex,0,newobj);
+		}
+		else {
+			schedule.push(newobj);
+		}
+
+		displaySchedule();
 
 		eventname = null;
 		homeaway = null;
@@ -595,9 +568,10 @@ function deleteEvent() {
 	editopponentaster.style.display = "none";
 
 	let eventtodelete = this.parentNode.parentNode.childNodes[1].childNodes[0].innerHTML;
+	let eventtodeletestarttime = this.parentNode.parentNode.childNodes[2].childNodes[0].innerHTML;
 
 	for (let i = 0; i < schedule.length; i++) {
-	 	if (schedule[i]["Date"] === eventtodelete) {
+	 	if (schedule[i]["Date"] === eventtodelete && schedule[i]["Start Time"] === eventtodeletestarttime) {
 	 		schedule.splice(i,1);
 		}
 	}
@@ -694,5 +668,16 @@ function saveEvents() {
 	}
 	else {
 		eventeditaster.style.display = "inline";
+	}
+}
+
+function displaySchedule() {
+	while (eventtable.rows.length > 2) {
+		eventtable.deleteRow(1);
+	}
+
+	for (let i = 0; i < schedule.length; i++) {
+		let row = eventtable.insertRow(eventtable.rows.length - 1);
+		addScheduleRow(row,schedule[i].Event,schedule[i]["Date"],schedule[i]["Start Time"],schedule[i]["End Time"],schedule[i]["Location"], schedule[i]["Opponent"],schedule[i]["Homeaway"]);
 	}
 }
